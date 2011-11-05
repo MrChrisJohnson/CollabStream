@@ -1,0 +1,3 @@
+Authors: Christopher Johnson, Alex Tang, Muqeet Ali
+
+CollabStream implements parallelized online matrix factorization using stochastic gradient descent in the case of online streaming data.  CollabStream utilizes the Storm parallelization framework developed by Natahn Marz and available at https://github.com/nathanmarz/storm.  For more information on the algorithm used by CollabStream please see the full report found at https://github.com/MrChrisJohnson/CollabStream.   
