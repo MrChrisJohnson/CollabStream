@@ -36,3 +36,8 @@ Thumbs.db
 #directories
 classes/
 lib/
+
+# Eclipse settings
+.settings/
+.project
+.classpath
