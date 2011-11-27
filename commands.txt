@@ -1,0 +1,6 @@
+# Some useful commands
+
+mvn exec:java -Dexec.mainClass=collabstream.lc.LineCountTopology -Dexec.args='local src/main/resources/lotr.txt' -Dexec.classpathScope=compile
+mvn exec:java -Dexec.mainClass=collabstream.lc.LineCountTopology -Dexec.args='local src/main/resources/lotr.txt' -Dexec.classpathScope=compile | grep '########'
+mvn compile exec:java -Dexec.mainClass=collabstream.lc.LineCountTopology -Dexec.args='local src/main/resources/lotr.txt' -Dexec.classpathScope=compile
+mvn compile exec:java -Dexec.mainClass=collabstream.lc.LineCountTopology -Dexec.args='local src/main/resources/lotr.txt' -Dexec.classpathScope=compile | grep '########'
