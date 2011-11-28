@@ -19,6 +19,7 @@ public class RatingsBlockStore implements IRichBolt {
 	}
 	
 	public void execute(Tuple tuple) {
+		System.out.println("######## RatingsBlockStore.execute: " + tuple.getValue(0));
 	}
 	
 	public void declareOutputFields(OutputFieldsDeclarer declarer) {

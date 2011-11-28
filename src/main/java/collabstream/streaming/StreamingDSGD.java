@@ -14,6 +14,10 @@ public class StreamingDSGD {
 		}
 		
 		Config config = new Config();
+		config.addSerialization(TrainingExample.Serialization.class);
+		config.addSerialization(MatrixSerialization.class);
+		config.addSerialization(RatingsBlockSerialization.class);
+		
 		TopologyBuilder builder = new TopologyBuilder();
 		
 		System.out.println("######## StreamingDSGD.main: submitting topology");
