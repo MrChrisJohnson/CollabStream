@@ -19,7 +19,7 @@ public class MatrixStore implements IRichBolt {
 	}
 	
 	public void execute(Tuple tuple) {
-		System.out.println("######## DataStore.execute: \n" + MatrixUtils.toString((float[][])tuple.getValue(0)));
+		System.out.println("######## MatrixStore.execute: \n" + MatrixUtils.toString((float[][])tuple.getValue(0)));
 	}
 	
 	public void declareOutputFields(OutputFieldsDeclarer declarer) {
