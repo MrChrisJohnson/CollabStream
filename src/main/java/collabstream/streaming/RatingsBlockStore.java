@@ -8,7 +8,7 @@ import backtype.storm.topology.IRichBolt;
 import backtype.storm.topology.OutputFieldsDeclarer;
 import backtype.storm.tuple.Tuple;
 
-public class DataStore implements IRichBolt {
+public class RatingsBlockStore implements IRichBolt {
 	private OutputCollector collector;
 	
 	public void prepare(Map config, TopologyContext context, OutputCollector collector) {
