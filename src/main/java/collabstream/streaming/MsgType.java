@@ -1,6 +1,7 @@
 package collabstream.streaming;
 
 public enum MsgType {
+	END_OF_DATA,
 	TRAINING_EXAMPLE,
 	PROCESS_BLOCK_REQ,
 	PROCESS_BLOCK_FIN,
