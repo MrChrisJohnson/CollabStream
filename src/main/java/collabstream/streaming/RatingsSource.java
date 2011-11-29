@@ -22,7 +22,7 @@ public class RatingsSource implements IRichSpout {
 		return false;
 	}
 	
-	public void open(Map config, TopologyContext context, SpoutOutputCollector collector) {
+	public void open(Map stormConfig, TopologyContext context, SpoutOutputCollector collector) {
 		this.collector = collector;
 	}
 	

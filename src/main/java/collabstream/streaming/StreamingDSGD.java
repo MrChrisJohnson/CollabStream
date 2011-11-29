@@ -13,10 +13,10 @@ public class StreamingDSGD {
 			return;
 		}
 		
-		Config config = new Config();
-		config.addSerialization(TrainingExample.Serialization.class);
-		config.addSerialization(RatingsBlock.Serialization.class);
-		config.addSerialization(MatrixSerialization.class);
+		Config stormConfig = new Config();
+		stormConfig.addSerialization(TrainingExample.Serialization.class);
+		stormConfig.addSerialization(RatingsBlock.Serialization.class);
+		stormConfig.addSerialization(MatrixSerialization.class);
 		
 		TopologyBuilder builder = new TopologyBuilder();
 		builder.setSpout(1, new RatingsSource());
@@ -26,9 +26,9 @@ public class StreamingDSGD {
 		
 		if ("local".equals(args[0])) {
 			LocalCluster cluster = new LocalCluster();
-			cluster.submitTopology("StreamingDSGD", config, builder.createTopology());
+			cluster.submitTopology("StreamingDSGD", stormConfig, builder.createTopology());
 		} else {
-			StormSubmitter.submitTopology("StreamingDSGD", config, builder.createTopology());
+			StormSubmitter.submitTopology("StreamingDSGD", stormConfig, builder.createTopology());
 		}
 	}
 }

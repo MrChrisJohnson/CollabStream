@@ -13,7 +13,7 @@ import static collabstream.streaming.MsgType.*;
 public class Master implements IRichBolt {
 	private OutputCollector collector;
 	
-	public void prepare(Map config, TopologyContext context, OutputCollector collector) {
+	public void prepare(Map stormConfig, TopologyContext context, OutputCollector collector) {
 		this.collector = collector;
 	}
 	
