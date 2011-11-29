@@ -19,6 +19,8 @@ public class StreamingDSGD {
 		config.addSerialization(MatrixSerialization.class);
 		
 		TopologyBuilder builder = new TopologyBuilder();
+		builder.setSpout(1, new RatingsSource());
+		builder.setBolt(2, new Master()).shuffleGrouping(1);
 		
 		System.out.println("######## StreamingDSGD.main: submitting topology");
 		

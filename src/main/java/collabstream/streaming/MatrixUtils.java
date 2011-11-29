@@ -28,7 +28,7 @@ public class MatrixUtils {
 		return b.toString();
 	}
 	
-	public static Values toValues(float[][] matrix) {
-		return new Values((Object)matrix);
+	public static Values toValues(MsgType msgType, float[][] matrix) {
+		return new Values(msgType, (Object)matrix);
 	}
 }

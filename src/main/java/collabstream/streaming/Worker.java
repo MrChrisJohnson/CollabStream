@@ -8,6 +8,8 @@ import backtype.storm.topology.IRichBolt;
 import backtype.storm.topology.OutputFieldsDeclarer;
 import backtype.storm.tuple.Tuple;
 
+import static collabstream.streaming.MsgType.*;
+
 public class Worker implements IRichBolt {
 	private OutputCollector collector;
 	

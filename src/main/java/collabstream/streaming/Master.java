@@ -8,6 +8,8 @@ import backtype.storm.topology.IRichBolt;
 import backtype.storm.topology.OutputFieldsDeclarer;
 import backtype.storm.tuple.Tuple;
 
+import static collabstream.streaming.MsgType.*;
+
 public class Master implements IRichBolt {
 	private OutputCollector collector;
 	
@@ -19,6 +21,7 @@ public class Master implements IRichBolt {
 	}
 	
 	public void execute(Tuple tuple) {
+		System.out.println("######## Master.execute: " + tuple.getValue(0) + ' ' + tuple.getValue(1));
 	}
 	
 	public void declareOutputFields(OutputFieldsDeclarer declarer) {
