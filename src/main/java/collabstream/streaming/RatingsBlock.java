@@ -40,7 +40,7 @@ public class RatingsBlock {
 
 	public static class Serialization implements ISerialization<RatingsBlock> {
 		public boolean accept(Class c) {
-			return RatingsBlock.class.isAssignableFrom(c);
+			return RatingsBlock.class.equals(c);
 		}
 		
 		public void serialize(RatingsBlock block, DataOutputStream out) throws IOException {
