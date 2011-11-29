@@ -3,10 +3,11 @@ package collabstream.streaming;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.io.Serializable;
 
 import backtype.storm.serialization.ISerialization;
 
-public class TrainingExample {
+public class TrainingExample implements Serializable {
 	public int userId, itemId;
 	public float rating;
 	
