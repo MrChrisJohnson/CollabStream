@@ -8,8 +8,8 @@ import java.io.Serializable;
 import backtype.storm.serialization.ISerialization;
 
 public class TrainingExample implements Serializable {
-	public int userId, itemId;
-	public float rating;
+	public final int userId, itemId;
+	public final float rating;
 	
 	public TrainingExample(int userId, int itemId, float rating) {
 		this.userId = userId;
