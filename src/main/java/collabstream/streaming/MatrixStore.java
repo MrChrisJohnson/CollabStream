@@ -2,7 +2,6 @@ package collabstream.streaming;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Random;
 
 import backtype.storm.task.OutputCollector;
 import backtype.storm.task.TopologyContext;
@@ -31,17 +30,11 @@ public class MatrixStore implements IRichBolt {
 		MsgType msgType = (MsgType)tuple.getValue(0);
 		switch (msgType) {
 		case USER_BLOCK_REQ:
-			Random random = new Random(System.currentTimeMillis());
 			long start = System.currentTimeMillis();
-			float[][] block = new float[200000][20];
+			float[][] block = MatrixUtils.generateRandomMatrix(200000, 20);
+			long end = System.currentTimeMillis();
 			int numRows = block.length;
 			int numCols = block[0].length;
-			for (int i = 0; i < numRows; ++i) {
-				for (int j = 0; j < numCols; ++j) {
-					block[i][j] = random.nextFloat();
-				}
-			}
-			long end = System.currentTimeMillis();
 			System.out.printf("######## MatrixStore.execute: %f %d\n", block[numRows-1][numCols-1], end - start);
 			collector.emit(new Values(USER_BLOCK, (Object)block));
 			break;
