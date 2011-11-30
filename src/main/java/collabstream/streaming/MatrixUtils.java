@@ -1,7 +1,5 @@
 package collabstream.streaming;
 
-import backtype.storm.tuple.Values;
-
 public class MatrixUtils {
 	public static String toString(float[][] matrix) {
 		if (matrix == null) return "";
