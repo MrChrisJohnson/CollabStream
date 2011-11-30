@@ -15,12 +15,14 @@ public class StreamingDSGD {
 		
 		Config stormConfig = new Config();
 		stormConfig.addSerialization(TrainingExample.Serialization.class);
-		stormConfig.addSerialization(RatingsBlock.Serialization.class);
+		stormConfig.addSerialization(BlockPair.Serialization.class);
 		stormConfig.addSerialization(MatrixSerialization.class);
 		
 		TopologyBuilder builder = new TopologyBuilder();
 		builder.setSpout(1, new RatingsSource());
 		builder.setBolt(2, new Master()).shuffleGrouping(1);
+		builder.setBolt(3, new Worker()).shuffleGrouping(2).shuffleGrouping(4);
+		builder.setBolt(4, new MatrixStore()).shuffleGrouping(3);
 		
 		System.out.println("######## StreamingDSGD.main: submitting topology");
 		

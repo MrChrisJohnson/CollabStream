@@ -30,18 +30,21 @@ public class RatingsSource implements IRichSpout {
 	}
 	
 	public void ack(Object msgId) {
+		System.out.println("######## RatingsSource.ack: " + msgId);
 	}
 	
 	public void fail(Object msgId) {
+		System.out.println("######## RatingsSource.fail: " + msgId);
 	}
 	
 	public void nextTuple() {
-		if (curr < 3) {
-			collector.emit(new Values(TRAINING_EXAMPLE, example[curr++]));
+		if (curr < 1) {
+			TrainingExample ex = example[curr++];
+			collector.emit(new Values(TRAINING_EXAMPLE, ex));
 		}
 	}
 	
 	public void declareOutputFields(OutputFieldsDeclarer declarer) {
-		declarer.declare(new Fields("msgType", "msg"));
+		declarer.declare(new Fields("msgType", "example"));
 	}
 }

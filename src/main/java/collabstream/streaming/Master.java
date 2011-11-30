@@ -6,7 +6,9 @@ import backtype.storm.task.OutputCollector;
 import backtype.storm.task.TopologyContext;
 import backtype.storm.topology.IRichBolt;
 import backtype.storm.topology.OutputFieldsDeclarer;
+import backtype.storm.tuple.Fields;
 import backtype.storm.tuple.Tuple;
+import backtype.storm.tuple.Values;
 
 import static collabstream.streaming.MsgType.*;
 
@@ -21,9 +23,15 @@ public class Master implements IRichBolt {
 	}
 	
 	public void execute(Tuple tuple) {
-		System.out.println("######## Master.execute: " + tuple.getValue(0) + ' ' + tuple.getValue(1));
+		MsgType msgType = (MsgType)tuple.getValue(0);
+		switch (msgType) {
+		case TRAINING_EXAMPLE:
+			collector.emit(new Values(PROCESS_BLOCK_REQ, new BlockPair(5,9)));
+			break;
+		}
 	}
 	
 	public void declareOutputFields(OutputFieldsDeclarer declarer) {
+		declarer.declare(new Fields("msgType", "msg"));
 	}
 }

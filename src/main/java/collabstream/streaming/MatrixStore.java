@@ -1,17 +1,24 @@
 package collabstream.streaming;
 
+import java.util.HashMap;
 import java.util.Map;
+import java.util.Random;
 
 import backtype.storm.task.OutputCollector;
 import backtype.storm.task.TopologyContext;
 import backtype.storm.topology.IRichBolt;
 import backtype.storm.topology.OutputFieldsDeclarer;
+import backtype.storm.tuple.Fields;
 import backtype.storm.tuple.Tuple;
+import backtype.storm.tuple.Values;
 
 import static collabstream.streaming.MsgType.*;
 
 public class MatrixStore implements IRichBolt {
 	private OutputCollector collector;
+	private Configuration config;
+	private Map<Integer, float[][]> userBlockMap = new HashMap<Integer, float[][]>();
+	private Map<Integer, float[][]> itemBlockMap = new HashMap<Integer, float[][]>();
 	
 	public void prepare(Map stormConfig, TopologyContext context, OutputCollector collector) {
 		this.collector = collector;
@@ -21,10 +28,27 @@ public class MatrixStore implements IRichBolt {
 	}
 	
 	public void execute(Tuple tuple) {
-		System.out.println("######## MatrixStore.execute: " + tuple.getValue(0) + "\n"
-			+ MatrixUtils.toString((float[][])tuple.getValue(1)));
+		MsgType msgType = (MsgType)tuple.getValue(0);
+		switch (msgType) {
+		case USER_BLOCK_REQ:
+			Random random = new Random(System.currentTimeMillis());
+			long start = System.currentTimeMillis();
+			float[][] block = new float[200000][20];
+			int numRows = block.length;
+			int numCols = block[0].length;
+			for (int i = 0; i < numRows; ++i) {
+				for (int j = 0; j < numCols; ++j) {
+					block[i][j] = random.nextFloat();
+				}
+			}
+			long end = System.currentTimeMillis();
+			System.out.printf("######## MatrixStore.execute: %f %d\n", block[numRows-1][numCols-1], end - start);
+			collector.emit(new Values(USER_BLOCK, (Object)block));
+			break;
+		}
 	}
 	
 	public void declareOutputFields(OutputFieldsDeclarer declarer) {
+		declarer.declare(new Fields("msgType", "block"));
 	}
 }
