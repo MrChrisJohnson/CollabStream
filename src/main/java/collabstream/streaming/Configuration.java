@@ -1,6 +1,8 @@
 package collabstream.streaming;
 
-public class Configuration {
+import java.io.Serializable;
+
+public class Configuration implements Serializable {
 	public final int numUsers, numItems, numLatent;
 	public final int numUserBlocks, numItemBlocks;
 	private final int smallUserBlockSize, smallItemBlockSize;
