@@ -49,4 +49,20 @@ public class Configuration {
 	public int getItemBlockLength(int itemBlockIdx) {
 		return (itemBlockIdx < numBigItemBlocks) ? bigItemBlockSize : smallItemBlockSize;
 	}
+	
+	public int getUserBlockStart(int userBlockIdx) {
+		if (userBlockIdx < numBigUserBlocks) {
+			return bigUserBlockSize * userBlockIdx; 
+		} else {
+			return userBlockThreshold + (userBlockIdx - numBigUserBlocks) * smallUserBlockSize;
+		}
+	}
+	
+	public int getItemBlockStart(int itemBlockIdx) {
+		if (itemBlockIdx < numBigItemBlocks) {
+			return bigItemBlockSize * itemBlockIdx; 
+		} else {
+			return itemBlockThreshold + (itemBlockIdx - numBigItemBlocks) * smallItemBlockSize;
+		}
+	}
 }
