@@ -30,7 +30,6 @@ public class RatingsSource implements IRichSpout {
 	}
 	
 	public void ack(Object msgId) {
-		System.out.println("######## RatingsSource.ack: " + msgId);
 	}
 	
 	public void fail(Object msgId) {
@@ -40,7 +39,7 @@ public class RatingsSource implements IRichSpout {
 	public void nextTuple() {
 		if (curr < 1) {
 			TrainingExample ex = example[curr++];
-			collector.emit(new Values(TRAINING_EXAMPLE, ex));
+			collector.emit(new Values(TRAINING_EXAMPLE, ex), ex);
 		}
 	}
 	

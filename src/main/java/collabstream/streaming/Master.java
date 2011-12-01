@@ -26,6 +26,7 @@ public class Master implements IRichBolt {
 		MsgType msgType = (MsgType)tuple.getValue(0);
 		switch (msgType) {
 		case TRAINING_EXAMPLE:
+			collector.ack(tuple);
 			collector.emit(new Values(PROCESS_BLOCK_REQ, new BlockPair(5,9)));
 			break;
 		}
