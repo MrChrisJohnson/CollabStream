@@ -36,12 +36,12 @@ public class MatrixStore implements IRichBolt {
 			int numRows = block.length;
 			int numCols = block[0].length;
 			System.out.printf("######## MatrixStore.execute: %f %d\n", block[numRows-1][numCols-1], end - start);
-			collector.emit(new Values(USER_BLOCK, (Object)block));
+			collector.emitDirect(tuple.getSourceTask(), new Values(USER_BLOCK, (Object)block));
 			break;
 		}
 	}
 	
 	public void declareOutputFields(OutputFieldsDeclarer declarer) {
-		declarer.declare(new Fields("msgType", "block"));
+		declarer.declare(true, new Fields("msgType", "block"));
 	}
 }
