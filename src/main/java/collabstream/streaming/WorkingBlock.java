@@ -7,10 +7,11 @@ public class WorkingBlock {
 	public final List<WorkingExample> examples = new ArrayList<WorkingExample>();
 	public float[][] userBlock = null;
 	public float[][] itemBlock = null;
-	public boolean waiting = false;
+	public boolean waitingForBlocks = false;
+	public boolean waitingForStorage = false;
 	
 	public String toString() {
-		StringBuilder b = new StringBuilder(24*examples.size() + 48);
+		StringBuilder b = new StringBuilder(24*examples.size() + 72);
 		
 		b.append("examples={");
 		boolean first = true;
@@ -26,7 +27,8 @@ public class WorkingBlock {
 		
 		b.append("\nuserBlock=\n").append(MatrixUtils.toString(userBlock));
 		b.append("\nitemBlock=\n").append(MatrixUtils.toString(itemBlock));
-		b.append("\nwaiting=").append(waiting);
+		b.append("\nwaitingForBlocks=").append(waitingForBlocks);
+		b.append("\nwaitingForStorage=").append(waitingForStorage);
 		
 		return b.toString();
 	}
