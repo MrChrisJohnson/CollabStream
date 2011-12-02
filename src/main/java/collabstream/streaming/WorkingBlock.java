@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class WorkingBlock {
-	public final List<WorkingExample> examples = new ArrayList<WorkingExample>();
+	public final List<TrainingExample> examples = new ArrayList<TrainingExample>();
 	public float[][] userBlock = null;
 	public float[][] itemBlock = null;
 	public boolean waitingForBlocks = false;
@@ -31,5 +31,15 @@ public class WorkingBlock {
 		b.append("\nwaitingForStorage=").append(waitingForStorage);
 		
 		return b.toString();
+	}
+	
+	public TrainingExample getLatestExample() {
+		TrainingExample latest = null;
+		for (TrainingExample ex : examples) {
+			if (latest == null || latest.timestamp < ex.timestamp) {
+				latest = ex;
+			}
+		}
+		return latest;
 	}
 }

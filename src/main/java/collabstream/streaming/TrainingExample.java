@@ -8,17 +8,22 @@ import java.io.Serializable;
 import backtype.storm.serialization.ISerialization;
 
 public class TrainingExample implements Serializable {
+	// Not a system timestamp; just a sequence number. Using type int to save memory; as a consequence,
+	// cannot handle more than 2^31 training examples.
+	public final int timestamp;
 	public final int userId, itemId;
 	public final float rating;
+	public int numTrainingIters = 0;
 	
-	public TrainingExample(int userId, int itemId, float rating) {
+	public TrainingExample(int timestamp, int userId, int itemId, float rating) {
+		this.timestamp = timestamp;
 		this.userId = userId;
 		this.itemId = itemId;
 		this.rating = rating;
 	}
 	
 	public String toString() {
-		return "(" + userId + "," + itemId + "," + rating + ")";
+		return "(<" + timestamp + ">," + userId + "," + itemId + "," + rating + "," + numTrainingIters + ")";
 	}
 	
 	public boolean equals(Object obj) {
@@ -45,13 +50,14 @@ public class TrainingExample implements Serializable {
 		}
 		
 		public void serialize(TrainingExample ex, DataOutputStream out) throws IOException {
+			out.writeInt(ex.timestamp);
 			out.writeInt(ex.userId);
 			out.writeInt(ex.itemId);
 			out.writeFloat(ex.rating);
 		}
 		
 		public TrainingExample deserialize(DataInputStream in) throws IOException {
-			return new TrainingExample(in.readInt(), in.readInt(), in.readFloat());
+			return new TrainingExample(in.readInt(), in.readInt(), in.readInt(), in.readFloat());
 		}
 	}
 }

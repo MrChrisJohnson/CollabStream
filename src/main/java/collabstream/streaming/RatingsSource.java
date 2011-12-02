@@ -13,9 +13,7 @@ import static collabstream.streaming.MsgType.*;
 
 public class RatingsSource implements IRichSpout {
 	protected SpoutOutputCollector collector;
-	private TrainingExample[] example = {
-		new TrainingExample(1,1,3.14f), new TrainingExample(2,1,2.71828f), new TrainingExample(3,1,9000f)
-	};
+	private TrainingExample[] example = { new TrainingExample(0,13,21,17.0f), new TrainingExample(1,16,23,17.0f) };
 	private int curr = 0;
 	
 	public boolean isDistributed() {
@@ -33,11 +31,11 @@ public class RatingsSource implements IRichSpout {
 	}
 	
 	public void fail(Object msgId) {
-		System.out.println("######## RatingsSource.fail: " + msgId);
+		System.err.println("######## RatingsSource.fail: " + msgId);
 	}
 	
 	public void nextTuple() {
-		if (curr < 1) {
+		if (curr < 2) {
 			TrainingExample ex = example[curr++];
 			collector.emit(new Values(TRAINING_EXAMPLE, ex), ex);
 		}
