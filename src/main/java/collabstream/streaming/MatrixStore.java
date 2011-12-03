@@ -45,7 +45,7 @@ public class MatrixStore implements IRichBolt {
 			// are sent to the same thread, it should be safe in our case.
 			float[][] userBlock = userBlockMap.get(bp.userBlockIdx);
 			if (userBlock == null) {
-				userBlock = generateUserMatrix(config.getUserBlockLength(bp.userBlockIdx), config.numLatent);
+				userBlock = MatrixUtils.generateRandomMatrix(config.getUserBlockLength(bp.userBlockIdx), config.numLatent);
 				userBlockMap.put(bp.userBlockIdx, userBlock);
 			}
 			collector.emitDirect(taskId, new Values(USER_BLOCK, bp, (Object)userBlock));
@@ -55,7 +55,7 @@ public class MatrixStore implements IRichBolt {
 			// are sent to the same thread, it should be safe in our case.
 			float[][] itemBlock = itemBlockMap.get(bp.itemBlockIdx);
 			if (itemBlock == null) {
-				itemBlock = generateItemMatrix(config.getItemBlockLength(bp.itemBlockIdx), config.numLatent);
+				itemBlock = MatrixUtils.generateRandomMatrix(config.getItemBlockLength(bp.itemBlockIdx), config.numLatent);
 				itemBlockMap.put(bp.itemBlockIdx, itemBlock);
 			}
 			collector.emitDirect(taskId, new Values(ITEM_BLOCK, bp, (Object)itemBlock));
@@ -73,29 +73,5 @@ public class MatrixStore implements IRichBolt {
 	
 	public void declareOutputFields(OutputFieldsDeclarer declarer) {
 		declarer.declare(true, new Fields("msgType", "blockPair", "block"));
-	}
-	
-	// for testing only
-	private static float[][] generateUserMatrix(int numRows, int numCols) {
-		float[][] matrix = new float[numRows][numCols];
-		
-		for (int i = 0; i < numRows; ++i) {
-			for (int j = 0; j < numCols; ++j) {
-				matrix[i][j] = 2.0f;
-			}
-		}
-		return matrix;
-	}
-	
-	// for testing only
-	private static float[][] generateItemMatrix(int numRows, int numCols) {
-		float[][] matrix = new float[numRows][numCols];
-		
-		for (int i = 0; i < numRows; ++i) {
-			for (int j = 0; j < numCols; ++j) {
-				matrix[i][j] = 3.0f;
-			}
-		}
-		return matrix;
 	}
 }
