@@ -54,10 +54,13 @@ public class TrainingExample implements Serializable {
 			out.writeInt(ex.userId);
 			out.writeInt(ex.itemId);
 			out.writeFloat(ex.rating);
+			out.writeInt(ex.numTrainingIters);
 		}
 		
 		public TrainingExample deserialize(DataInputStream in) throws IOException {
-			return new TrainingExample(in.readInt(), in.readInt(), in.readInt(), in.readFloat());
+			TrainingExample ex = new TrainingExample(in.readInt(), in.readInt(), in.readInt(), in.readFloat());
+			ex.numTrainingIters = in.readInt();
+			return ex;
 		}
 	}
 }

@@ -1,6 +1,8 @@
 package collabstream.streaming;
 
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import backtype.storm.task.OutputCollector;
 import backtype.storm.task.TopologyContext;
@@ -13,15 +15,16 @@ import backtype.storm.tuple.Values;
 import static collabstream.streaming.MsgType.*;
 
 public class Master implements IRichBolt {
-	public static final int TO_WORKER_STREAM_ID = 1;
-	public static final int TO_MATRIX_STORE_STREAM_ID = 2;
-	
 	private OutputCollector collector;
 	private final Configuration config;
-	private int count = 0;
+	private BlockPair[][] blockPair;
+	private TrainingExample[][] latestExample;
+	private Set<BlockPair> freeSet = new HashSet<BlockPair>();
 	
 	public Master(Configuration config) {
-		this.config = config;
+		this.config = config;		
+		blockPair = new BlockPair[config.numUserBlocks][config.numItemBlocks];
+		latestExample = new TrainingExample[config.numUserBlocks][config.numItemBlocks];
 	}
 	
 	public void prepare(Map stormConfig, TopologyContext context, OutputCollector collector) {
@@ -41,11 +44,21 @@ public class Master implements IRichBolt {
 		switch (msgType) {
 		case TRAINING_EXAMPLE:
 			TrainingExample ex = (TrainingExample)tuple.getValue(1);
+			int userBlockIdx = config.getUserBlockIdx(ex.userId);
+			int itemBlockIdx = config.getItemBlockIdx(ex.itemId);
+			latestExample[userBlockIdx][itemBlockIdx] = ex;
+			
+			bp = blockPair[userBlockIdx][itemBlockIdx];
+			if (bp == null) {
+				bp = blockPair[userBlockIdx][itemBlockIdx] = new BlockPair(userBlockIdx, itemBlockIdx);
+				freeSet.add(bp);
+			}
+			
 			collector.ack(tuple);
-			bp = new BlockPair(config.getUserBlockIdx(ex.userId), config.getItemBlockIdx(ex.itemId));
-			collector.emit(TO_WORKER_STREAM_ID, new Values(TRAINING_EXAMPLE, ex, null, bp.userBlockIdx));
-			if (++count == 2) {
-				collector.emit(TO_WORKER_STREAM_ID, new Values(PROCESS_BLOCK_REQ, null, new BlockPair(2,4), 2));
+			collector.emit(new Values(TRAINING_EXAMPLE, null, ex, userBlockIdx));
+			
+			if (ex.timestamp % 2 == 1) {
+				collector.emit(new Values(PROCESS_BLOCK_REQ, bp, null, bp.userBlockIdx));
 			}
 			break;
 		case PROCESS_BLOCK_FIN:
@@ -54,13 +67,22 @@ public class Master implements IRichBolt {
 			if (config.debug) {
 				System.out.println("######## Master.execute: " + msgType + " " + bp + " " + latest);
 			}
+			collector.emit(new Values(USER_BLOCK_REQ, bp, null, bp.userBlockIdx));
+			collector.emit(new Values(ITEM_BLOCK_REQ, bp, null, bp.userBlockIdx));
+			break;
+		case USER_BLOCK:
+			bp = (BlockPair)tuple.getValue(1);
+			System.out.println("######## Master.execute: userBlock=\n" + MatrixUtils.toString((float[][])tuple.getValue(2)));
+			break;
+		case ITEM_BLOCK:
+			bp = (BlockPair)tuple.getValue(1);
+			System.out.println("######## Master.execute: itemBlock=\n" + MatrixUtils.toString((float[][])tuple.getValue(2)));
 			break;
 		}
 	}
 	
 	public void declareOutputFields(OutputFieldsDeclarer declarer) {
 		// Field "userBlockIdx" used solely for grouping
-		declarer.declareStream(TO_WORKER_STREAM_ID, new Fields("msgType", "example", "blockPair", "userBlockIdx"));
-		declarer.declareStream(TO_MATRIX_STORE_STREAM_ID, new Fields("msgType"));
+		declarer.declare(new Fields("msgType", "blockPair", "example", "userBlockIdx"));
 	}
 }

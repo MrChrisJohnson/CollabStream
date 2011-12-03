@@ -1,7 +1,7 @@
 package collabstream.streaming;
 
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import backtype.storm.task.OutputCollector;
 import backtype.storm.task.TopologyContext;
@@ -20,7 +20,7 @@ public class Worker implements IRichBolt {
 	
 	private OutputCollector collector;
 	private final Configuration config;
-	private final Map<BlockPair, WorkingBlock> workingBlockMap = new HashMap<BlockPair, WorkingBlock>();
+	private final Map<BlockPair, WorkingBlock> workingBlockMap = new ConcurrentHashMap<BlockPair, WorkingBlock>();
 	
 	public Worker(Configuration config) {
 		this.config = config;
@@ -35,7 +35,7 @@ public class Worker implements IRichBolt {
 	
 	public void execute(Tuple tuple) {
 		MsgType msgType = (MsgType)tuple.getValue(0);
-		if (config.debug && msgType != TRAINING_EXAMPLE && msgType != PROCESS_BLOCK_REQ) {
+		if (config.debug && msgType != TRAINING_EXAMPLE) {
 			System.out.println("######## Worker.execute: " + msgType + " " + tuple.getValue(1));
 		}
 		BlockPair bp;
@@ -43,7 +43,7 @@ public class Worker implements IRichBolt {
 		
 		switch (msgType) {
 		case TRAINING_EXAMPLE:
-			TrainingExample ex = (TrainingExample)tuple.getValue(1);
+			TrainingExample ex = (TrainingExample)tuple.getValue(2);
 			if (config.debug) {
 				System.out.println("######## Worker.execute: " + msgType + " " + ex);
 			}
@@ -52,14 +52,21 @@ public class Worker implements IRichBolt {
 			workingBlock.examples.add(ex);
 			break;
 		case PROCESS_BLOCK_REQ:
-			bp = (BlockPair)tuple.getValue(2);
-			if (config.debug) {
-				System.out.println("######## Worker.execute: " + msgType + " " + bp);
-			}
+			bp = (BlockPair)tuple.getValue(1);
 			workingBlock = getWorkingBlock(bp);			
 			workingBlock.waitingForBlocks = true;
-			collector.emit(USER_BLOCK_STREAM_ID, new Values(USER_BLOCK_REQ, bp, null, bp.userBlockIdx));
-			collector.emit(ITEM_BLOCK_STREAM_ID, new Values(ITEM_BLOCK_REQ, bp, null, bp.itemBlockIdx));
+			collector.emit(USER_BLOCK_STREAM_ID, new Values(USER_BLOCK_REQ, bp, null, null, bp.userBlockIdx));
+			collector.emit(ITEM_BLOCK_STREAM_ID, new Values(ITEM_BLOCK_REQ, bp, null, null, bp.itemBlockIdx));
+			break;
+		case USER_BLOCK_REQ:
+			// Forward request from master
+			bp = (BlockPair)tuple.getValue(1);
+			collector.emit(USER_BLOCK_STREAM_ID, new Values(USER_BLOCK_REQ, bp, null, tuple.getSourceTask(), bp.userBlockIdx));
+			break;
+		case ITEM_BLOCK_REQ:
+			// Forward request from master
+			bp = (BlockPair)tuple.getValue(1);
+			collector.emit(ITEM_BLOCK_STREAM_ID, new Values(ITEM_BLOCK_REQ, bp, null, tuple.getSourceTask(), bp.itemBlockIdx));
 			break;
 		case USER_BLOCK:
 			bp = (BlockPair)tuple.getValue(1);
@@ -93,8 +100,7 @@ public class Worker implements IRichBolt {
 				workingBlock.userBlock = null;
 				if (workingBlock.itemBlock == null) {
 					workingBlock.waitingForStorage = false;
-					TrainingExample latest = workingBlock.getLatestExample();
-					collector.emit(TO_MASTER_STREAM_ID, new Values(PROCESS_BLOCK_FIN, bp, latest));
+					collector.emit(TO_MASTER_STREAM_ID, new Values(PROCESS_BLOCK_FIN, bp, workingBlock.getLatestExample()));
 				}
 			}
 			break;
@@ -106,8 +112,7 @@ public class Worker implements IRichBolt {
 				workingBlock.itemBlock = null;
 				if (workingBlock.userBlock == null) {
 					workingBlock.waitingForStorage = false;
-					TrainingExample latest = workingBlock.getLatestExample();
-					collector.emit(TO_MASTER_STREAM_ID, new Values(PROCESS_BLOCK_FIN, bp, latest));
+					collector.emit(TO_MASTER_STREAM_ID, new Values(PROCESS_BLOCK_FIN, bp, workingBlock.getLatestExample()));
 				}
 			}
 			break;
@@ -117,11 +122,13 @@ public class Worker implements IRichBolt {
 	public void declareOutputFields(OutputFieldsDeclarer declarer) {
 		// Fields "userBlockIdx" and "itemBlockIdx" used solely for grouping
 		declarer.declareStream(TO_MASTER_STREAM_ID, new Fields("msgType", "blockPair", "latestExample"));
-		declarer.declareStream(USER_BLOCK_STREAM_ID, new Fields("msgType", "blockPair", "block", "userBlockIdx"));
-		declarer.declareStream(ITEM_BLOCK_STREAM_ID, new Fields("msgType", "blockPair", "block", "itemBlockIdx"));
+		declarer.declareStream(USER_BLOCK_STREAM_ID, new Fields("msgType", "blockPair", "block", "taskId", "userBlockIdx"));
+		declarer.declareStream(ITEM_BLOCK_STREAM_ID, new Fields("msgType", "blockPair", "block", "taskId", "itemBlockIdx"));
 	}
 	
 	private WorkingBlock getWorkingBlock(BlockPair bp) {
+		// In general, this pattern of access is not thread-safe. But since requests with the same userBlockIdx
+		// are sent to the same thread, it should be safe in our case.
 		WorkingBlock workingBlock = workingBlockMap.get(bp);
 		if (workingBlock == null) {
 			workingBlock = new WorkingBlock();
@@ -135,6 +142,8 @@ public class Worker implements IRichBolt {
 		int itemBlockStart = config.getItemBlockStart(bp.itemBlockIdx);
 		float[][] userBlock = workingBlock.userBlock;
 		float[][] itemBlock = workingBlock.itemBlock;
+		
+		PermutationUtils.permute(workingBlock.examples);
 		
 		for (TrainingExample ex : workingBlock.examples) {
 			if (ex.numTrainingIters >= config.maxTrainingIters) continue;
@@ -159,9 +168,8 @@ public class Worker implements IRichBolt {
 		}
 		workingBlock.waitingForBlocks = false;
 		workingBlock.waitingForStorage = true;
-		System.out.println("######## Worker.execute: workingBlock=\n" + workingBlock);
 		
-		collector.emit(USER_BLOCK_STREAM_ID, new Values(USER_BLOCK, bp, userBlock, bp.userBlockIdx));
-		collector.emit(ITEM_BLOCK_STREAM_ID, new Values(ITEM_BLOCK, bp, itemBlock, bp.itemBlockIdx));		
+		collector.emit(USER_BLOCK_STREAM_ID, new Values(USER_BLOCK, bp, userBlock, null, bp.userBlockIdx));
+		collector.emit(ITEM_BLOCK_STREAM_ID, new Values(ITEM_BLOCK, bp, itemBlock, null, bp.itemBlockIdx));		
 	}
 }

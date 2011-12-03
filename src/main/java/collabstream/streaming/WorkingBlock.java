@@ -1,10 +1,10 @@
 package collabstream.streaming;
 
+import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.List;
 
-public class WorkingBlock {
-	public final List<TrainingExample> examples = new ArrayList<TrainingExample>();
+public class WorkingBlock implements Serializable {
+	public final ArrayList<TrainingExample> examples = new ArrayList<TrainingExample>();
 	public float[][] userBlock = null;
 	public float[][] itemBlock = null;
 	public boolean waitingForBlocks = false;

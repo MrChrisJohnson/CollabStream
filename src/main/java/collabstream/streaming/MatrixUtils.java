@@ -3,6 +3,10 @@ package collabstream.streaming;
 import java.util.Random;
 
 public class MatrixUtils {
+	private static final ThreadLocal<Random> localRandom = new ThreadLocal<Random>() {
+		protected Random initialValue() { return new Random(); }
+	};
+	
 	public static String toString(float[][] matrix) {
 		if (matrix == null) return "";
 		int numRows = matrix.length;
@@ -29,7 +33,7 @@ public class MatrixUtils {
 	}
 	
 	public static float[][] generateRandomMatrix(int numRows, int numCols) {
-		Random random = new Random();
+		Random random = localRandom.get();
 		float[][] matrix = new float[numRows][numCols];
 		
 		for (int i = 0; i < numRows; ++i) {

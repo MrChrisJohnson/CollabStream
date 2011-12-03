@@ -25,16 +25,16 @@ public class StreamingDSGD {
 		builder.setSpout(1, new RatingsSource());
 		builder.setBolt(2, new Master(config))
 			.globalGrouping(1)
-			.globalGrouping(3, Worker.TO_MASTER_STREAM_ID);
-		builder.setBolt(3, new Worker(config)).shuffleGrouping(2)
-			.fieldsGrouping(2, Master.TO_WORKER_STREAM_ID, new Fields("userBlockIdx"))
+			.globalGrouping(3, Worker.TO_MASTER_STREAM_ID)
 			.directGrouping(4)
 			.directGrouping(5);
-		builder.setBolt(4, new MatrixStore(config))
-			.allGrouping(2, Master.TO_MATRIX_STORE_STREAM_ID)
+		builder.setBolt(3, new Worker(config), 2)
+			.fieldsGrouping(2, new Fields("userBlockIdx"))
+			.directGrouping(4)
+			.directGrouping(5);
+		builder.setBolt(4, new MatrixStore(config), 2)
 			.fieldsGrouping(3, Worker.USER_BLOCK_STREAM_ID, new Fields("userBlockIdx"));
-		builder.setBolt(5, new MatrixStore(config))
-			.allGrouping(2, Master.TO_MATRIX_STORE_STREAM_ID)
+		builder.setBolt(5, new MatrixStore(config), 2)
 			.fieldsGrouping(3, Worker.ITEM_BLOCK_STREAM_ID, new Fields("itemBlockIdx"));
 		
 		System.out.println("######## StreamingDSGD.main: submitting topology");
