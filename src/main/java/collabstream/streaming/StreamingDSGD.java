@@ -1,5 +1,9 @@
 package collabstream.streaming;
 
+import java.io.File;
+import java.io.FileReader;
+import java.util.Properties;
+
 import backtype.storm.Config;
 import backtype.storm.LocalCluster;
 import backtype.storm.StormSubmitter;
@@ -14,28 +18,52 @@ public class StreamingDSGD {
 			return;
 		}
 		
-		Configuration config = new Configuration(
-			17, 28, 3, 3, 6, 0.2f, 0.3f, 0.05f, 1, "", "data/output/test.user", "data/output/test.item", true);
+		Properties props = new Properties();
+		File propFile = new File("data/collabstream.properties");
+		if (propFile.exists()) {
+			FileReader in = new FileReader(propFile);
+			props.load(in);
+			in.close();
+		}
+		
+		int numUsers = Integer.parseInt(args[1]);
+		int numItems = Integer.parseInt(args[2]);
+		int numLatent = Integer.parseInt(props.getProperty("numLatent", "10"));
+		int numUserBlocks = Integer.parseInt(props.getProperty("numUserBlocks", "10"));
+		int numItemBlocks = Integer.parseInt(props.getProperty("numItemBlocks", "10"));
+		float userPenalty = Float.parseFloat(props.getProperty("userPenalty", "0.1"));
+		float itemPenalty = Float.parseFloat(props.getProperty("itemPenalty", "0.1"));
+		float initialStepSize = Float.parseFloat(props.getProperty("initialStepSize", "1"));
+		int maxTrainingIters = Integer.parseInt(props.getProperty("maxTrainingIters", "30"));
+		String inputFilename = args[3];
+		String userOutputFilename = args[4];
+		String itemOutputFilename = args[5];
+		boolean debug = Boolean.parseBoolean(props.getProperty("debug", "false"));
+
+		Configuration config = new Configuration(numUsers, numItems, numLatent, numUserBlocks, numItemBlocks,
+												 userPenalty, itemPenalty, initialStepSize, maxTrainingIters,
+												 inputFilename, userOutputFilename, itemOutputFilename, debug);
 		
 		Config stormConfig = new Config();
 		stormConfig.addSerialization(TrainingExample.Serialization.class);
 		stormConfig.addSerialization(BlockPair.Serialization.class);
 		stormConfig.addSerialization(MatrixSerialization.class);
+		stormConfig.setNumWorkers(config.getNumProcesses());
 		
 		TopologyBuilder builder = new TopologyBuilder();
-		builder.setSpout(1, new RatingsSource());
+		builder.setSpout(1, new RatingsSource(config));
 		builder.setBolt(2, new Master(config))
 			.globalGrouping(1)
 			.globalGrouping(3, Worker.TO_MASTER_STREAM_ID)
 			.directGrouping(4)
 			.directGrouping(5);
-		builder.setBolt(3, new Worker(config), 1)
+		builder.setBolt(3, new Worker(config), config.getNumWorkers())
 			.fieldsGrouping(2, new Fields("userBlockIdx"))
 			.directGrouping(4)
 			.directGrouping(5);
-		builder.setBolt(4, new MatrixStore(config), 2)
+		builder.setBolt(4, new MatrixStore(config), config.numUserBlocks)
 			.fieldsGrouping(3, Worker.USER_BLOCK_STREAM_ID, new Fields("userBlockIdx"));
-		builder.setBolt(5, new MatrixStore(config), 2)
+		builder.setBolt(5, new MatrixStore(config), config.numItemBlocks)
 			.fieldsGrouping(3, Worker.ITEM_BLOCK_STREAM_ID, new Fields("itemBlockIdx"));
 		
 		System.out.println("######## StreamingDSGD.main: submitting topology");

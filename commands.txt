@@ -5,7 +5,9 @@ mvn exec:java -Dexec.mainClass=collabstream.lc.LineCountTopology -Dexec.args='lo
 mvn compile exec:java -Dexec.mainClass=collabstream.lc.LineCountTopology -Dexec.args='local src/main/resources/lotr.txt' -Dexec.classpathScope=compile
 mvn compile exec:java -Dexec.mainClass=collabstream.lc.LineCountTopology -Dexec.args='local src/main/resources/lotr.txt' -Dexec.classpathScope=compile | grep '########'
 
-mvn exec:java -Dexec.mainClass=collabstream.streaming.StreamingDSGD -Dexec.args='local foobar' -Dexec.classpathScope=compile
-mvn exec:java -Dexec.mainClass=collabstream.streaming.StreamingDSGD -Dexec.args='local foobar' -Dexec.classpathScope=compile | grep '########'
-mvn compile exec:java -Dexec.mainClass=collabstream.streaming.StreamingDSGD -Dexec.args='local foobar' -Dexec.classpathScope=compile
-mvn compile exec:java -Dexec.mainClass=collabstream.streaming.StreamingDSGD -Dexec.args='local foobar' -Dexec.classpathScope=compile | grep '########'
+mvn exec:java -Dexec.mainClass=collabstream.streaming.StreamingDSGD -Dexec.args='local 17 28 data/input/test.dat data/output/test.user data/output/test.item' -Dexec.classpathScope=compile
+mvn exec:java -Dexec.mainClass=collabstream.streaming.StreamingDSGD -Dexec.args='local 17 28 data/input/test.dat data/output/test.user data/output/test.item' -Dexec.classpathScope=compile | grep '########'
+mvn compile exec:java -Dexec.mainClass=collabstream.streaming.StreamingDSGD -Dexec.args='local 17 28 data/input/test.dat data/output/test.user data/output/test.item' -Dexec.classpathScope=compile
+mvn compile exec:java -Dexec.mainClass=collabstream.streaming.StreamingDSGD -Dexec.args='local 17 28 data/input/test.dat data/output/test.user data/output/test.item' -Dexec.classpathScope=compile | grep '########'
+
+mvn exec:java -Dexec.mainClass=collabstream.streaming.StreamingDSGD -Dexec.args='local 8 2648861 data/input/netflix_tr_head1000_shuf data/output/netflix_tr_head1000_shuf.user data/output/netflix_tr_head1000_shuf.item' -Dexec.classpathScope=compile

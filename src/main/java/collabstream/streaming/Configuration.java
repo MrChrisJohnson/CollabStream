@@ -43,6 +43,15 @@ public class Configuration implements Serializable {
 		itemBlockThreshold = bigItemBlockSize * numBigItemBlocks;
 	}
 	
+	public int getNumWorkers() {
+		return numUserBlocks;
+	}
+	
+	public int getNumProcesses() {
+		// numUserBlocks (Worker) + numUserBlocks (MatrixStore) + numItemBlocks (MatrixStore) + 1 (Master) + 1 (RatingsSource)
+		return 2*numUserBlocks + numItemBlocks + 2;
+	}
+	
 	public int getUserBlockIdx(int userId) {
 		if (userId < userBlockThreshold) {
 			return userId / bigUserBlockSize; 

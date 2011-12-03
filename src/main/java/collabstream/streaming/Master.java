@@ -47,7 +47,7 @@ public class Master implements IRichBolt {
 	public void prepare(Map stormConfig, TopologyContext context, OutputCollector collector) {
 		this.collector = collector;
 		startTime = System.currentTimeMillis();
-		System.out.printf("######## Started: %1$tY-%1$tb-%1$td %1$tT %tZ\n", startTime);
+		System.out.printf("######## Training started: %1$tY-%1$tb-%1$td %1$tT %tZ\n", startTime);
 	}
 	
 	public void cleanup() {

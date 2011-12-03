@@ -1,6 +1,12 @@
 package collabstream.streaming;
 
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.Map;
+
+import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.time.DurationFormatUtils;
 
 import backtype.storm.spout.SpoutOutputCollector;
 import backtype.storm.task.TopologyContext;
@@ -13,13 +19,14 @@ import static collabstream.streaming.MsgType.*;
 
 public class RatingsSource implements IRichSpout {
 	protected SpoutOutputCollector collector;
-	private TrainingExample[] example = {
-		new TrainingExample(0,13,21,17.0f),
-		new TrainingExample(1,16,23,17.0f),
-		new TrainingExample(2,6,10,17.0f),
-		new TrainingExample(3,8,12,17.0f)
-	};
-	private int curr = 0;
+	private final Configuration config;
+	private BufferedReader input;
+	private int sequenceNum = 0;
+	private long inputStartTime;
+	
+	public RatingsSource(Configuration config) {
+		this.config = config;
+	}
 	
 	public boolean isDistributed() {
 		return false;
@@ -27,6 +34,13 @@ public class RatingsSource implements IRichSpout {
 	
 	public void open(Map stormConfig, TopologyContext context, SpoutOutputCollector collector) {
 		this.collector = collector;
+		inputStartTime = System.currentTimeMillis();
+		System.out.printf("######## Input started: %1$tY-%1$tb-%1$td %1$tT %tZ\n", inputStartTime);
+		try {
+			input = new BufferedReader(new FileReader(config.inputFilename));
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
 	}
 	
 	public void close() {
@@ -40,11 +54,32 @@ public class RatingsSource implements IRichSpout {
 	}
 	
 	public void nextTuple() {
-		if (curr < 4) {
-			TrainingExample ex = example[curr++];
-			collector.emit(new Values(TRAINING_EXAMPLE, ex), ex);
-		} else if (curr++ == 4){
-			collector.emit(new Values(END_OF_DATA, null), END_OF_DATA);
+		if (input == null) return;
+		try {
+			String line = input.readLine();
+			if (line == null) {
+				long inputEndTime = System.currentTimeMillis();
+				System.out.printf("######## Input finished: %1$tY-%1$tb-%1$td %1$tT %tZ\n", inputEndTime);
+				System.out.println("######## Elapsed input time: "
+					+ DurationFormatUtils.formatPeriod(inputStartTime, inputEndTime, "H:m:s") + " (h:m:s)");
+				
+				input.close();
+				input = null;
+				collector.emit(new Values(END_OF_DATA, null), END_OF_DATA);
+			} else {
+				try {
+					String[] token = StringUtils.split(line, ' ');
+					int userId = Integer.parseInt(token[0]);
+					int itemId = Integer.parseInt(token[1]);
+					float rating = Float.parseFloat(token[2]);
+					TrainingExample ex = new TrainingExample(sequenceNum++, userId, itemId, rating);
+					collector.emit(new Values(TRAINING_EXAMPLE, ex), ex);
+				} catch (Exception e) {
+					System.err.println("######## RatingsSource.nextTuple: Could not parse line: " + line + "\n" + e);
+				}
+			}
+		} catch (IOException e) {
+			throw new RuntimeException(e);
 		}
 	}
 	
