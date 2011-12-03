@@ -3,6 +3,8 @@ package collabstream.streaming;
 import java.util.ArrayList;
 import java.util.Random;
 
+import org.apache.commons.lang.time.DurationFormatUtils;
+
 public class PermutationUtils {
 	private static final ThreadLocal<Random> localRandom = new ThreadLocal<Random>() {
 		protected Random initialValue() { return new Random(); }

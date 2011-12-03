@@ -43,6 +43,8 @@ public class RatingsSource implements IRichSpout {
 		if (curr < 4) {
 			TrainingExample ex = example[curr++];
 			collector.emit(new Values(TRAINING_EXAMPLE, ex), ex);
+		} else if (curr++ == 4){
+			collector.emit(new Values(END_OF_DATA, null), END_OF_DATA);
 		}
 	}
 	

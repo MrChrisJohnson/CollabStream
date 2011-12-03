@@ -14,7 +14,8 @@ public class StreamingDSGD {
 			return;
 		}
 		
-		Configuration config = new Configuration(17, 28, 3, 3, 6, 0.2f, 0.3f, 0.05f, 30, "", "", true);
+		Configuration config = new Configuration(
+			17, 28, 3, 3, 6, 0.2f, 0.3f, 0.05f, 1, "", "data/output/test.user", "data/output/test.item", true);
 		
 		Config stormConfig = new Config();
 		stormConfig.addSerialization(TrainingExample.Serialization.class);
@@ -28,7 +29,7 @@ public class StreamingDSGD {
 			.globalGrouping(3, Worker.TO_MASTER_STREAM_ID)
 			.directGrouping(4)
 			.directGrouping(5);
-		builder.setBolt(3, new Worker(config), 2)
+		builder.setBolt(3, new Worker(config), 1)
 			.fieldsGrouping(2, new Fields("userBlockIdx"))
 			.directGrouping(4)
 			.directGrouping(5);

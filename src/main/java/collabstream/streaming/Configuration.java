@@ -7,7 +7,7 @@ public class Configuration implements Serializable {
 	public final int numUserBlocks, numItemBlocks;
 	public final float userPenalty, itemPenalty, initialStepSize;
 	public final int maxTrainingIters;
-	public final String inputFileName, outputFileName;
+	public final String inputFilename, userOutputFilename, itemOutputFilename;
 	public final boolean debug;
 	
 	private final int smallUserBlockSize, smallItemBlockSize;
@@ -17,7 +17,7 @@ public class Configuration implements Serializable {
 	
 	public Configuration(int numUsers, int numItems, int numLatent, int numUserBlocks, int numItemBlocks,
 						 float userPenalty, float itemPenalty, float initialStepSize, int maxTrainingIters,
-						 String inputFileName, String outputFileName, boolean debug) {
+						 String inputFilename, String userOutputFilename, String itemOutputFilename, boolean debug) {
 		this.numUsers = numUsers;
 		this.numItems = numItems;
 		this.numLatent = numLatent;
@@ -27,8 +27,9 @@ public class Configuration implements Serializable {
 		this.itemPenalty = itemPenalty;
 		this.initialStepSize = initialStepSize;
 		this.maxTrainingIters = maxTrainingIters;
-		this.inputFileName = inputFileName;
-		this.outputFileName = outputFileName;
+		this.inputFilename = inputFilename;
+		this.userOutputFilename = userOutputFilename;
+		this.itemOutputFilename = itemOutputFilename;
 		this.debug = debug;
 		
 		smallUserBlockSize = numUsers / numUserBlocks;
