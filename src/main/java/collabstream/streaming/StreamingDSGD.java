@@ -38,11 +38,13 @@ public class StreamingDSGD {
 		String inputFilename = args[3];
 		String userOutputFilename = args[4];
 		String itemOutputFilename = args[5];
+		long inputDelay = Long.parseLong(props.getProperty("inputDelay", "0"));
 		boolean debug = Boolean.parseBoolean(props.getProperty("debug", "false"));
 
 		Configuration config = new Configuration(numUsers, numItems, numLatent, numUserBlocks, numItemBlocks,
 												 userPenalty, itemPenalty, initialStepSize, maxTrainingIters,
-												 inputFilename, userOutputFilename, itemOutputFilename, debug);
+												 inputFilename, userOutputFilename, itemOutputFilename,
+												 inputDelay, debug);
 		
 		Config stormConfig = new Config();
 		stormConfig.addSerialization(TrainingExample.Serialization.class);
