@@ -12,9 +12,10 @@ import backtype.storm.tuple.Fields;
 
 public class StreamingDSGD {
 	public static void main(String[] args) throws Exception {
-		if (args.length < 2) {
+		if (args.length < 6) {
 			System.err.println("######## Wrong number of arguments");
-			System.err.println("######## required args: local|production fileName");
+			System.err.println("######## required args: local|production numUsers numItems"
+							   + " inputFilename userOutputFilename itemOutputFilename");
 			return;
 		}
 		
