@@ -35,7 +35,7 @@ public class Master implements IRichBolt {
 	private Queue<BlockPair> userBlockQueue = new LinkedList<BlockPair>();
 	private Queue<BlockPair> itemBlockQueue = new LinkedList<BlockPair>();
 	private boolean endOfData = false;
-	private long startTime, outputStartTime;
+	private long startTime, outputStartTime = 0;
 	private final Random random = new Random(); 
 	
 	public Master(Configuration config) {
@@ -117,7 +117,7 @@ public class Master implements IRichBolt {
 			float[][] userBlock = (float[][])tuple.getValue(2);
 			head = userBlockQueue.remove();
 			if (!head.equals(bp)) {
-				System.err.println("######## Master.execute: Expected " + head + " for user block. Received " + bp);
+				throw new RuntimeException("Expected " + head + ", but received " + bp + " for " + USER_BLOCK);
 			}
 			writeUserBlock(bp.userBlockIdx, userBlock);
 			requestNextUserBlock();
@@ -127,7 +127,7 @@ public class Master implements IRichBolt {
 			float[][] itemBlock = (float[][])tuple.getValue(2);
 			head = itemBlockQueue.remove();
 			if (!head.equals(bp)) {
-				System.err.println("######## Master.execute: Expected " + head + " for item block. Received " + bp);
+				throw new RuntimeException("Expected " + head + ", but received " + bp + " for " + ITEM_BLOCK);
 			}
 			writeItemBlock(bp.itemBlockIdx, itemBlock);
 			requestNextItemBlock();
@@ -188,6 +188,7 @@ public class Master implements IRichBolt {
 	
 	private void startOutput() {
 		try {
+			if (outputStartTime > 0) return;
 			outputStartTime = System.currentTimeMillis();
 			System.out.printf("######## Training finished: %1$tY-%1$tb-%1$td %1$tT %tZ\n", outputStartTime);
 			System.out.println("######## Elapsed training time: "
