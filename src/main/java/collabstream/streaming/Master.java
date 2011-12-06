@@ -233,18 +233,24 @@ public class Master implements IRichBolt {
 	private void writeUserBlock(int userBlockIdx, float[][] userBlock) {
 		int userBlockStart = config.getUserBlockStart(userBlockIdx);
 		for (int i = 0; i < userBlock.length; ++i) {
+			userOutput.print(userBlockStart + i);
 			for (int k = 0; k < config.numLatent; ++k) {
-				userOutput.printf("%d %d %f\n", userBlockStart + i, k, userBlock[i][k]);
+				userOutput.print(' ');
+				userOutput.print(userBlock[i][k]);
 			}
+			userOutput.println();
 		}
 	}
 	
 	private void writeItemBlock(int itemBlockIdx, float[][] itemBlock) {
 		int itemBlockStart = config.getItemBlockStart(itemBlockIdx);
 		for (int j = 0; j < itemBlock.length; ++j) {
+			itemOutput.print(itemBlockStart + j);
 			for (int k = 0; k < config.numLatent; ++k) {
-				itemOutput.printf("%d %d %f\n", itemBlockStart + j, k, itemBlock[j][k]);
+				itemOutput.print(' ');
+				itemOutput.print(itemBlock[j][k]);
 			}
+			itemOutput.println();
 		}		
 	}
 	
