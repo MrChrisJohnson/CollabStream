@@ -50,6 +50,7 @@ public class Worker implements IRichBolt {
 			bp = new BlockPair(config.getUserBlockIdx(ex.userId), config.getItemBlockIdx(ex.itemId));
 			workingBlock = getWorkingBlock(bp);
 			workingBlock.examples.add(ex);
+			collector.ack(tuple);
 			break;
 		case PROCESS_BLOCK_REQ:
 			bp = (BlockPair)tuple.getValue(1);

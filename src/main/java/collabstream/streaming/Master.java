@@ -58,7 +58,7 @@ public class Master implements IRichBolt {
 		if (config.debug && msgType != END_OF_DATA && msgType != PROCESS_BLOCK_FIN) {
 			System.out.println("######## Master.execute: " + msgType + " " + tuple.getValue(1));
 		}
-		TrainingExample ex;
+		TrainingExample ex, latest;
 		BlockPair bp, head;
 		
 		switch (msgType) {
@@ -74,7 +74,11 @@ public class Master implements IRichBolt {
 			ex = (TrainingExample)tuple.getValue(1);
 			int userBlockIdx = config.getUserBlockIdx(ex.userId);
 			int itemBlockIdx = config.getItemBlockIdx(ex.itemId);
-			latestExample[userBlockIdx][itemBlockIdx] = ex;
+			
+			latest = latestExample[userBlockIdx][itemBlockIdx];
+			if (latest == null || latest.timestamp < ex.timestamp) {
+				latestExample[userBlockIdx][itemBlockIdx] = ex;
+			}
 			
 			bp = blockPair[userBlockIdx][itemBlockIdx];
 			if (bp == null) {
@@ -83,8 +87,8 @@ public class Master implements IRichBolt {
 				freeSet.add(bp);
 			}
 			
+			collector.emit(tuple, new Values(TRAINING_EXAMPLE, null, ex, userBlockIdx));
 			collector.ack(tuple);
-			collector.emit(new Values(TRAINING_EXAMPLE, null, ex, userBlockIdx));
 			distributeWork();
 			break;
 		case PROCESS_BLOCK_FIN:
@@ -94,7 +98,7 @@ public class Master implements IRichBolt {
 				System.out.println("######## Master.execute: " + msgType + " " + bp + " " + ex);
 			}
 			
-			TrainingExample latest = latestExample[bp.userBlockIdx][bp.itemBlockIdx];
+			latest = latestExample[bp.userBlockIdx][bp.itemBlockIdx];
 			if (latest.timestamp == ex.timestamp) {
 				latest.numTrainingIters = ex.numTrainingIters;
 				if (endOfData && latest.numTrainingIters >= config.maxTrainingIters) {

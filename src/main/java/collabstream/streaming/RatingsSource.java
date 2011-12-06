@@ -51,7 +51,13 @@ public class RatingsSource implements IRichSpout {
 	}
 	
 	public void fail(Object msgId) {
-		System.err.println("######## RatingsSource.fail: " + msgId);
+		System.err.println("######## RatingsSource.fail: Resending " + msgId);
+		if (msgId == END_OF_DATA) {
+			collector.emit(new Values(END_OF_DATA, null), END_OF_DATA);
+		} else {
+			TrainingExample ex = (TrainingExample)msgId;
+			collector.emit(new Values(TRAINING_EXAMPLE, ex), ex);
+		}
 	}
 	
 	public void nextTuple() {
