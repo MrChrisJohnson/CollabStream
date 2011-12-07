@@ -52,6 +52,7 @@ public class StreamingDSGD {
 		stormConfig.addSerialization(BlockPair.Serialization.class);
 		stormConfig.addSerialization(MatrixSerialization.class);
 		stormConfig.setNumWorkers(config.getNumProcesses());
+		stormConfig.setNumAckers(config.getNumWorkers()); // our notion of a worker is different from Storm's
 		
 		TopologyBuilder builder = new TopologyBuilder();
 		builder.setSpout(1, new RatingsSource(config));
