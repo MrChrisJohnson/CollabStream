@@ -34,7 +34,7 @@ public class StreamingDSGD {
 		int numItemBlocks = Integer.parseInt(props.getProperty("numItemBlocks", "10"));
 		float userPenalty = Float.parseFloat(props.getProperty("userPenalty", "0.1"));
 		float itemPenalty = Float.parseFloat(props.getProperty("itemPenalty", "0.1"));
-		float initialStepSize = Float.parseFloat(props.getProperty("initialStepSize", "1"));
+		float initialStepSize = Float.parseFloat(props.getProperty("initialStepSize", "0.1"));
 		int maxTrainingIters = Integer.parseInt(props.getProperty("maxTrainingIters", "30"));
 		String inputFilename = args[3];
 		String userOutputFilename = args[4];
