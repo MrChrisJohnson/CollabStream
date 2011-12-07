@@ -144,9 +144,10 @@ public class Worker implements IRichBolt {
 		float[][] userBlock = workingBlock.userBlock;
 		float[][] itemBlock = workingBlock.itemBlock;
 		
-		PermutationUtils.permute(workingBlock.examples);
+		TrainingExample[] examples = workingBlock.examples.toArray(new TrainingExample[workingBlock.examples.size()]);
+		PermutationUtils.permute(examples);
 		
-		for (TrainingExample ex : workingBlock.examples) {
+		for (TrainingExample ex : examples) {
 			if (ex.numTrainingIters >= config.maxTrainingIters) continue;
 			int i = ex.userId - userBlockStart;
 			int j = ex.itemId - itemBlockStart;
