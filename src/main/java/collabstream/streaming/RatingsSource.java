@@ -14,6 +14,7 @@ import backtype.storm.topology.IRichSpout;
 import backtype.storm.topology.OutputFieldsDeclarer;
 import backtype.storm.tuple.Fields;
 import backtype.storm.tuple.Values;
+import backtype.storm.utils.Utils;
 
 import static collabstream.streaming.MsgType.*;
 
@@ -50,7 +51,15 @@ public class RatingsSource implements IRichSpout {
 	}
 	
 	public void fail(Object msgId) {
-		System.err.println("######## RatingsSource.fail: " + msgId);
+		if (config.debug) {
+			System.err.println("######## RatingsSource.fail: Resending " + msgId);
+		}
+		if (msgId == END_OF_DATA) {
+			collector.emit(new Values(END_OF_DATA, null), END_OF_DATA);
+		} else {
+			TrainingExample ex = (TrainingExample)msgId;
+			collector.emit(new Values(TRAINING_EXAMPLE, ex), ex);
+		}
 	}
 	
 	public void nextTuple() {
@@ -72,8 +81,13 @@ public class RatingsSource implements IRichSpout {
 					int userId = Integer.parseInt(token[0]);
 					int itemId = Integer.parseInt(token[1]);
 					float rating = Float.parseFloat(token[2]);
+					
 					TrainingExample ex = new TrainingExample(sequenceNum++, userId, itemId, rating);
 					collector.emit(new Values(TRAINING_EXAMPLE, ex), ex);
+					
+					if (config.inputDelay > 0) {
+						Utils.sleep(config.inputDelay);
+					}
 				} catch (Exception e) {
 					System.err.println("######## RatingsSource.nextTuple: Could not parse line: " + line + "\n" + e);
 				}

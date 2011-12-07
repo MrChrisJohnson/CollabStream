@@ -35,7 +35,7 @@ public class Master implements IRichBolt {
 	private Queue<BlockPair> userBlockQueue = new LinkedList<BlockPair>();
 	private Queue<BlockPair> itemBlockQueue = new LinkedList<BlockPair>();
 	private boolean endOfData = false;
-	private long startTime, outputStartTime;
+	private long startTime, outputStartTime = 0;
 	private final Random random = new Random(); 
 	
 	public Master(Configuration config) {
@@ -58,7 +58,7 @@ public class Master implements IRichBolt {
 		if (config.debug && msgType != END_OF_DATA && msgType != PROCESS_BLOCK_FIN) {
 			System.out.println("######## Master.execute: " + msgType + " " + tuple.getValue(1));
 		}
-		TrainingExample ex;
+		TrainingExample ex, latest;
 		BlockPair bp, head;
 		
 		switch (msgType) {
@@ -74,7 +74,11 @@ public class Master implements IRichBolt {
 			ex = (TrainingExample)tuple.getValue(1);
 			int userBlockIdx = config.getUserBlockIdx(ex.userId);
 			int itemBlockIdx = config.getItemBlockIdx(ex.itemId);
-			latestExample[userBlockIdx][itemBlockIdx] = ex;
+			
+			latest = latestExample[userBlockIdx][itemBlockIdx];
+			if (latest == null || latest.timestamp < ex.timestamp) {
+				latestExample[userBlockIdx][itemBlockIdx] = ex;
+			}
 			
 			bp = blockPair[userBlockIdx][itemBlockIdx];
 			if (bp == null) {
@@ -83,8 +87,8 @@ public class Master implements IRichBolt {
 				freeSet.add(bp);
 			}
 			
+			collector.emit(tuple, new Values(TRAINING_EXAMPLE, null, ex, userBlockIdx));
 			collector.ack(tuple);
-			collector.emit(new Values(TRAINING_EXAMPLE, null, ex, userBlockIdx));
 			distributeWork();
 			break;
 		case PROCESS_BLOCK_FIN:
@@ -94,7 +98,7 @@ public class Master implements IRichBolt {
 				System.out.println("######## Master.execute: " + msgType + " " + bp + " " + ex);
 			}
 			
-			TrainingExample latest = latestExample[bp.userBlockIdx][bp.itemBlockIdx];
+			latest = latestExample[bp.userBlockIdx][bp.itemBlockIdx];
 			if (latest.timestamp == ex.timestamp) {
 				latest.numTrainingIters = ex.numTrainingIters;
 				if (endOfData && latest.numTrainingIters >= config.maxTrainingIters) {
@@ -117,7 +121,7 @@ public class Master implements IRichBolt {
 			float[][] userBlock = (float[][])tuple.getValue(2);
 			head = userBlockQueue.remove();
 			if (!head.equals(bp)) {
-				System.err.println("######## Master.execute: Expected " + head + " for user block. Received " + bp);
+				throw new RuntimeException("Expected " + head + ", but received " + bp + " for " + USER_BLOCK);
 			}
 			writeUserBlock(bp.userBlockIdx, userBlock);
 			requestNextUserBlock();
@@ -127,7 +131,7 @@ public class Master implements IRichBolt {
 			float[][] itemBlock = (float[][])tuple.getValue(2);
 			head = itemBlockQueue.remove();
 			if (!head.equals(bp)) {
-				System.err.println("######## Master.execute: Expected " + head + " for item block. Received " + bp);
+				throw new RuntimeException("Expected " + head + ", but received " + bp + " for " + ITEM_BLOCK);
 			}
 			writeItemBlock(bp.itemBlockIdx, itemBlock);
 			requestNextItemBlock();
@@ -188,6 +192,7 @@ public class Master implements IRichBolt {
 	
 	private void startOutput() {
 		try {
+			if (outputStartTime > 0) return;
 			outputStartTime = System.currentTimeMillis();
 			System.out.printf("######## Training finished: %1$tY-%1$tb-%1$td %1$tT %tZ\n", outputStartTime);
 			System.out.println("######## Elapsed training time: "
@@ -228,18 +233,24 @@ public class Master implements IRichBolt {
 	private void writeUserBlock(int userBlockIdx, float[][] userBlock) {
 		int userBlockStart = config.getUserBlockStart(userBlockIdx);
 		for (int i = 0; i < userBlock.length; ++i) {
+			userOutput.print(userBlockStart + i);
 			for (int k = 0; k < config.numLatent; ++k) {
-				userOutput.printf("%d %d %f\n", userBlockStart + i, k, userBlock[i][k]);
+				userOutput.print(' ');
+				userOutput.print(userBlock[i][k]);
 			}
+			userOutput.println();
 		}
 	}
 	
 	private void writeItemBlock(int itemBlockIdx, float[][] itemBlock) {
 		int itemBlockStart = config.getItemBlockStart(itemBlockIdx);
 		for (int j = 0; j < itemBlock.length; ++j) {
+			itemOutput.print(itemBlockStart + j);
 			for (int k = 0; k < config.numLatent; ++k) {
-				itemOutput.printf("%d %d %f\n", itemBlockStart + j, k, itemBlock[j][k]);
+				itemOutput.print(' ');
+				itemOutput.print(itemBlock[j][k]);
 			}
+			itemOutput.println();
 		}		
 	}
 	

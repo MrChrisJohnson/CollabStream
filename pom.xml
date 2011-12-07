@@ -32,7 +32,7 @@
 			<groupId>storm</groupId>
 			<artifactId>storm</artifactId>
 			<version>0.5.4</version>
-			<scope>compile</scope>
+			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>log4j</groupId>

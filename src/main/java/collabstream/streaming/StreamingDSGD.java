@@ -12,9 +12,10 @@ import backtype.storm.tuple.Fields;
 
 public class StreamingDSGD {
 	public static void main(String[] args) throws Exception {
-		if (args.length < 2) {
+		if (args.length < 6) {
 			System.err.println("######## Wrong number of arguments");
-			System.err.println("######## required args: local|production fileName");
+			System.err.println("######## required args: local|production numUsers numItems"
+							   + " inputFilename userOutputFilename itemOutputFilename");
 			return;
 		}
 		
@@ -33,22 +34,25 @@ public class StreamingDSGD {
 		int numItemBlocks = Integer.parseInt(props.getProperty("numItemBlocks", "10"));
 		float userPenalty = Float.parseFloat(props.getProperty("userPenalty", "0.1"));
 		float itemPenalty = Float.parseFloat(props.getProperty("itemPenalty", "0.1"));
-		float initialStepSize = Float.parseFloat(props.getProperty("initialStepSize", "1"));
+		float initialStepSize = Float.parseFloat(props.getProperty("initialStepSize", "0.1"));
 		int maxTrainingIters = Integer.parseInt(props.getProperty("maxTrainingIters", "30"));
 		String inputFilename = args[3];
 		String userOutputFilename = args[4];
 		String itemOutputFilename = args[5];
+		long inputDelay = Long.parseLong(props.getProperty("inputDelay", "0"));
 		boolean debug = Boolean.parseBoolean(props.getProperty("debug", "false"));
 
 		Configuration config = new Configuration(numUsers, numItems, numLatent, numUserBlocks, numItemBlocks,
 												 userPenalty, itemPenalty, initialStepSize, maxTrainingIters,
-												 inputFilename, userOutputFilename, itemOutputFilename, debug);
+												 inputFilename, userOutputFilename, itemOutputFilename,
+												 inputDelay, debug);
 		
 		Config stormConfig = new Config();
 		stormConfig.addSerialization(TrainingExample.Serialization.class);
 		stormConfig.addSerialization(BlockPair.Serialization.class);
 		stormConfig.addSerialization(MatrixSerialization.class);
 		stormConfig.setNumWorkers(config.getNumProcesses());
+		stormConfig.setNumAckers(config.getNumWorkers()); // our notion of a worker is different from Storm's
 		
 		TopologyBuilder builder = new TopologyBuilder();
 		builder.setSpout(1, new RatingsSource(config));

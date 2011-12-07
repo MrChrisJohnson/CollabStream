@@ -1,10 +1,11 @@
 package collabstream.streaming;
 
 import java.io.Serializable;
-import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
 
 public class WorkingBlock implements Serializable {
-	public final ArrayList<TrainingExample> examples = new ArrayList<TrainingExample>();
+	public final Set<TrainingExample> examples = new HashSet<TrainingExample>();
 	public float[][] userBlock = null;
 	public float[][] itemBlock = null;
 	public boolean waitingForBlocks = false;

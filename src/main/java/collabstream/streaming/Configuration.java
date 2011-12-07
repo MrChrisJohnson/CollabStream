@@ -8,6 +8,7 @@ public class Configuration implements Serializable {
 	public final float userPenalty, itemPenalty, initialStepSize;
 	public final int maxTrainingIters;
 	public final String inputFilename, userOutputFilename, itemOutputFilename;
+	public final long inputDelay; // delay between sending two training examples in milliseconds
 	public final boolean debug;
 	
 	private final int smallUserBlockSize, smallItemBlockSize;
@@ -17,7 +18,8 @@ public class Configuration implements Serializable {
 	
 	public Configuration(int numUsers, int numItems, int numLatent, int numUserBlocks, int numItemBlocks,
 						 float userPenalty, float itemPenalty, float initialStepSize, int maxTrainingIters,
-						 String inputFilename, String userOutputFilename, String itemOutputFilename, boolean debug) {
+						 String inputFilename, String userOutputFilename, String itemOutputFilename,
+						 long inputDelay, boolean debug) {
 		this.numUsers = numUsers;
 		this.numItems = numItems;
 		this.numLatent = numLatent;
@@ -30,6 +32,7 @@ public class Configuration implements Serializable {
 		this.inputFilename = inputFilename;
 		this.userOutputFilename = userOutputFilename;
 		this.itemOutputFilename = itemOutputFilename;
+		this.inputDelay = inputDelay;
 		this.debug = debug;
 		
 		smallUserBlockSize = numUsers / numUserBlocks;
