@@ -11,3 +11,5 @@ mvn compile exec:java -Dexec.mainClass=collabstream.streaming.StreamingDSGD -Dex
 mvn compile exec:java -Dexec.mainClass=collabstream.streaming.StreamingDSGD -Dexec.args='local 17 28 data/input/test.dat data/output/test.user data/output/test.item' -Dexec.classpathScope=compile | grep '########'
 
 mvn exec:java -Dexec.mainClass=collabstream.streaming.StreamingDSGD -Dexec.args='local 9 2648862 data/input/netflix_tr_head10000_shuf data/output/netflix_tr_head10000_shuf.user data/output/netflix_tr_head10000_shuf.item' -Dexec.classpathScope=compile
+
+mvn exec:java -Dexec.mainClass=collabstream.streaming.TestPredictions -Dexec.args='4 5 3 data/input/predtest data/output/predtest.user data/output/predtest.item'
