@@ -14,4 +14,4 @@ mvn exec:java -Dexec.mainClass=collabstream.streaming.StreamingDSGD -Dexec.args=
 
 mvn exec:java -Dexec.mainClass=collabstream.streaming.TestPredictions -Dexec.args='4 5 3 data/input/predtest data/output/predtest.user data/output/predtest.item'
 
-mvn exec:java -Dexec.mainClass=collabstream.streaming.StreamingDSGD -Dexec.args='local 6041 3953 data/input/MovieLens/ml_tr_rand.txt data/output/MovieLens/ml1m.user data/output/MovieLens/ml1m.item' -Dexec.classpathScope=compile
+mvn exec:java -Dexec.mainClass=collabstream.streaming.StreamingDSGD -Dexec.args='local 6041 3953 data/input/MovieLens/ml_tr_rand.txt data/output/MovieLens/ml.user data/output/MovieLens/ml.item' -Dexec.classpathScope=compile
