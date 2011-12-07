@@ -34,14 +34,14 @@ public class DSGDMain extends Configured {
 	
 	private static final Logger sLogger = Logger.getLogger(DSGDMain.class);
 	
-	public static int getBlockRow(long row, long numUsers, int numReducers) {
-		long usersPerBlock = numUsers / (long) numReducers;
-		return (int)(row / usersPerBlock);
+	public static int getBlockRow(int row, int numUsers, int numReducers) {
+		int usersPerBlock = (numUsers / numReducers) + 1;
+		return (int)Math.floor(((double)row / (double)usersPerBlock));
 	}
 
-	public static int getBlockColumn(long column, long numItems, int numReducers) {
-		long itemsPerBlock = numItems / (long) numReducers;
-		return (int)(column / itemsPerBlock);
+	public static int getBlockColumn(int column, int numItems, int numReducers) {
+		int itemsPerBlock = (numItems / numReducers) + 1;
+		return (int)Math.floor(((double)column / (double)itemsPerBlock));
 	}
 	
 	public static void main(String[] args) throws Exception {
@@ -58,24 +58,23 @@ public class DSGDMain extends Configured {
 		
 		// Fixed parameters
 		// Edit these for individual experiment
-		String numUsers = "17771";
+		String numUsers = "573";
 		String numItems = "2649430";
-		int kValue = 1000;
-		int numIterations = 2;
+		int kValue = 10;
+		int numIterations = 10;
+		int numBlocks = numReducers;
 		double stepSize = 0.1; // \tau (step size for SGD updates)
-
-
+		double lambda = 0.1;
+		
 		String trainInput = input + "/train";
 		String testInput = input + "/test";
-		String tempInput = output + "/temp/input";
-		String tempOutput = output + "/temp/output/";
+		String tempFactorsInput = output + "/temp/input";
+		String tempFactorsOutput = output + "/temp/output/";
 		String tempTrainRatings = output + "/temp/train";
 		String tempTestRatings = output + "/temp/test";
 		String emptyInput = input + "/empty";
 		String finalFactorsOutput = output + "/final_factors";
 		String rmseOutput = output + "/rmse";
-		Path tempInputPath = new Path(tempInput);
-		Path tempOutputPath = new Path(tempOutput);
 
 		/**
 		 * jobPreprocRatings
@@ -83,7 +82,7 @@ public class DSGDMain extends Configured {
 		 */
 		Configuration confPreprocRatings = new Configuration();
 		confPreprocRatings.set("numUsers", numUsers);
-		confPreprocRatings.set("numReducers", Integer.toString(numReducers)); 
+		confPreprocRatings.set("numReducers", Integer.toString(numBlocks)); 
 		confPreprocRatings.set("numItems", numItems);
 		confPreprocRatings.set("kValue", Integer.toString(kValue));
 
@@ -114,6 +113,9 @@ public class DSGDMain extends Configured {
 		
 		FileInputFormat.setInputPaths(jobPreprocRatings, new Path(testInput));
 		FileOutputFormat.setOutputPath(jobPreprocRatings, new Path(tempTestRatings));
+		// Delete the output directory if it exists already
+		FileSystem.get(confPreprocRatings).delete(new Path(tempTestRatings), true);
+		
 		jobPreprocRatings.setOutputFormatClass(SequenceFileOutputFormat.class);
 		jobPreprocRatings.setJarByClass(DSGDMain.class);
 		jobPreprocRatings.setNumReduceTasks(numReducers);
@@ -124,7 +126,8 @@ public class DSGDMain extends Configured {
 		jobPreprocRatings.setMapperClass(DSGDPreprocRatingsMapper.class);
 		jobPreprocRatings.setReducerClass(DSGDPreprocRatingsReducer.class);
 		jobPreprocRatings.setCombinerClass(DSGDPreprocRatingsReducer.class);
-		jobPreprocRatings.waitForCompletion(true);
+		
+		jobPreprocRatings.waitForCompletion(true);	
 		
 		/**
 		 * jobPreprocFactors
@@ -132,16 +135,16 @@ public class DSGDMain extends Configured {
 		 */
 		
 		Configuration confPreprocFactors = new Configuration();
-		confPreprocRatings.set("numUsers", numUsers);
-		confPreprocRatings.set("numItems", numItems);
-		confPreprocRatings.set("kValue", Integer.toString(kValue));
+		confPreprocFactors.set("numUsers", numUsers);
+		confPreprocFactors.set("numItems", numItems);
+		confPreprocFactors.set("kValue", Integer.toString(kValue));
 		
 		Job jobPreprocFactors = new Job(confPreprocFactors, "factors");
 		
 		FileInputFormat.setInputPaths(jobPreprocFactors, new Path(emptyInput));
-		FileOutputFormat.setOutputPath(jobPreprocRatings, new Path(tempTrainRatings));
+		FileOutputFormat.setOutputPath(jobPreprocFactors, new Path(tempFactorsInput));
 		// Delete the output directory if it exists already
-		FileSystem.get(confPreprocRatings).delete(new Path(tempTrainRatings), true);
+		FileSystem.get(confPreprocRatings).delete(new Path(tempFactorsInput), true);
 		
 		jobPreprocFactors.setJarByClass(DSGDMain.class);
 		jobPreprocFactors.setNumReduceTasks(1);
@@ -156,68 +159,95 @@ public class DSGDMain extends Configured {
 		
 		jobPreprocFactors.waitForCompletion(true);
 		
-		// Build stratum
-		List<Integer> stratum = new ArrayList<Integer>();
-		for(int i = 0; i < numReducers; ++i ){
-			stratum.add(i);
-		}
-		String stratumString;
-		for(int i=0; i < numIterations; ++i) {
-			
-			// Choose a random stratum
-			Collections.shuffle(stratum);
-			// Build string version of stratum
-			stratumString = "";
-			for(int j : stratum){
-				stratumString += " " + j;
+//		if(true){
+//			return;
+//		}
+		
+		for(int a = 0; numIterations < 1; ++a){
+			sLogger.info("Running iteration " + a);
+			// Build stratum
+			List<Integer> stratum = new ArrayList<Integer>();
+			for(int i = 0; i < numBlocks; ++i ){
+				stratum.add(i);
 			}
+			Collections.shuffle(stratum); //choose random initial stratum
+			String stratumString;
 			
-			/**
-			 * jobIntermediate
-			 * Perform DSGD updates on stratum
-			 */
-			Configuration confIntermediate = new Configuration();
-			confIntermediate.set("stratum", stratumString);
-			confIntermediate.set("numUsers", numUsers);
-			confIntermediate.set("numReducers", args[2]);
-			confIntermediate.set("numItems", numItems);
-			confIntermediate.set("kValue", Integer.toString(kValue));
-			confIntermediate.set("stepSize", Double.toString(stepSize));
-			FileSystem fs = FileSystem.get(confIntermediate);
-			
-			Job jobIntermediate = new Job(confIntermediate, "DSGD: Intermediate");
-
-			FileInputFormat.setInputPaths(jobIntermediate, tempInputPath);
-			FileOutputFormat.setOutputPath(jobIntermediate, tempOutputPath);
-			jobIntermediate.setInputFormatClass(SequenceFileInputFormat.class);
-			jobIntermediate.setOutputFormatClass(SequenceFileOutputFormat.class);
-
-			jobIntermediate.setJarByClass(DSGDMain.class);
-			jobIntermediate.setNumReduceTasks(numReducers);
-			jobIntermediate.setOutputKeyClass(MatrixItem.class);
-			jobIntermediate.setOutputValueClass(NullWritable.class);
-			jobIntermediate.setMapOutputKeyClass(MatrixItem.class);
-			jobIntermediate.setMapOutputValueClass(NullWritable.class);
-			
-			jobIntermediate.setMapperClass(DSGDIntermediateMapper.class);
-			// job.setCombinerClass(IntermediateReducer.class);
-			jobIntermediate.setReducerClass(DSGDIntermediateReducer.class);
-
-			jobIntermediate.waitForCompletion(true);
-			
-			fs.delete(tempInputPath, true);
-			fs.rename(tempOutputPath, tempInputPath);
-			
+			for(int i=0; i < numReducers; ++i) {
+				
+				sLogger.info("Running stratum " + i + " on iteration " + a );
+				// Choose next stratum
+				int current1 = stratum.get(0);
+				int current2;
+				for(int j = 1; j < numBlocks; ++j){
+					current2 = stratum.get(j);
+					stratum.set(j, current1);
+					current1 = current2;
+				}
+				stratum.set(0, current1);
+				
+				// Build string version of stratum
+				stratumString = "";
+				for(int j : stratum){
+					stratumString += " " + j;
+				}
+				
+				/**
+				 * jobIntermediate
+				 * Perform DSGD updates on stratum
+				 */
+				Configuration confIntermediate = new Configuration();
+				confIntermediate.set("stratum", stratumString);
+				confIntermediate.set("numUsers", numUsers);
+				confIntermediate.set("numReducers", Integer.toString(numBlocks));
+				confIntermediate.set("numItems", numItems);
+				confIntermediate.set("kValue", Integer.toString(kValue));
+				confIntermediate.set("stepSize", Double.toString(stepSize));
+				confIntermediate.set("lambda", Double.toString(lambda));
+				FileSystem fs = FileSystem.get(confIntermediate);
+				
+				Job jobIntermediate = new Job(confIntermediate, "DSGD: Intermediate");
+	
+				FileInputFormat.setInputPaths(jobIntermediate, tempFactorsInput + "," + tempTrainRatings);
+				FileOutputFormat.setOutputPath(jobIntermediate, new Path(tempFactorsOutput));
+				// Delete the output directory if it exists already
+				FileSystem.get(confPreprocRatings).delete(new Path(tempFactorsOutput), true);
+				jobIntermediate.setInputFormatClass(SequenceFileInputFormat.class);
+				jobIntermediate.setOutputFormatClass(SequenceFileOutputFormat.class);
+	
+				jobIntermediate.setJarByClass(DSGDMain.class);
+				jobIntermediate.setNumReduceTasks(numReducers);
+				jobIntermediate.setOutputKeyClass(MatrixItem.class);
+				jobIntermediate.setOutputValueClass(NullWritable.class);
+				jobIntermediate.setMapOutputKeyClass(IntMatrixItemPair.class);
+				jobIntermediate.setMapOutputValueClass(NullWritable.class);
+				
+				jobIntermediate.setMapperClass(DSGDIntermediateMapper.class);
+				// job.setCombinerClass(IntermediateReducer.class);
+				jobIntermediate.setReducerClass(DSGDIntermediateReducer.class);
+	
+				jobIntermediate.waitForCompletion(true);
+				
+				fs.delete(new Path(tempFactorsInput), true);
+				fs.rename(new Path(tempFactorsOutput), new Path(tempFactorsInput));
+			}
 			/**
 			 * jobRmse
 			 * Calculate RMSE on test data using current factors
 			 */
 			timeElapsed += (System.currentTimeMillis() - startTime);
 			
-			confIntermediate.set("timeElapsed", Long.toString(timeElapsed));
-			Job jobRmse = new Job(confIntermediate, "DSGD: RMSE");
-			FileInputFormat.setInputPaths(jobRmse, tempInput + "," + tempTestRatings);
-			FileOutputFormat.setOutputPath(jobRmse, new Path(rmseOutput));
+			Configuration confRmse = new Configuration();
+			confRmse.set("numUsers", numUsers);
+			confRmse.set("numReducers", Integer.toString(numBlocks));
+			confRmse.set("numItems", numItems);
+			confRmse.set("timeElapsed", Long.toString(timeElapsed));
+			confRmse.set("kValue", Integer.toString(kValue));
+			Job jobRmse = new Job(confRmse, "DSGD: RMSE");
+			FileInputFormat.setInputPaths(jobRmse, tempFactorsInput + "," + tempTestRatings);
+			FileOutputFormat.setOutputPath(jobRmse, new Path(rmseOutput + "/iter_" + a));
+			// Delete the output directory if it exists already
+			FileSystem.get(confPreprocRatings).delete(new Path(rmseOutput + "/iter_" + a), true);
 			jobRmse.setInputFormatClass(SequenceFileInputFormat.class);
 			
 			jobRmse.setJarByClass(DSGDMain.class);
@@ -234,30 +264,34 @@ public class DSGDMain extends Configured {
 			startTime = System.currentTimeMillis();
 		}
 		// Emit final factor matrices
-//		Configuration confFinal = new Configuration();
-//		confFinal.set("kValue", Integer.toString(kValue));
-//		
-//		Job jobFinal = new Job(confFinal, "ImprovedPBFS");
-//		FileInputFormat.setInputPaths(jobFinal, tempInputPath);
-//		FileOutputFormat.setOutputPath(jobFinal, new Path(finalOutput));
-//
-//		jobFinal.setInputFormatClass(SequenceFileInputFormat.class);
-//		jobFinal.setJarByClass(DSGDMain.class);
-//		jobFinal.setNumReduceTasks(1); // Must use 1 reducer so that both U, M, and R 
-//									   // get sent to same reducer
-//		
-//		jobFinal.setOutputKeyClass(NullWritable.class);
-//		jobFinal.setOutputValueClass(NullWritable.class);
-//		
-//		jobFinal.setMapOutputKeyClass(Matrix.class);
-//		jobFinal.setMapOutputValueClass(NullWritable.class);
-//		
-//		jobFinal.setMapperClass(DSGDOutputFactorsMapper.class);
-//		// jobFinal.setCombinerClass(FinalReducer.class);
-//		jobFinal.setReducerClass(DSGDOutputFactorsReducer.class);
-//
-//		jobFinal.waitForCompletion(true);
-//		// fsFinal.delete(tempInputDir, true);
+		Configuration confFinal = new Configuration();
+		confFinal.set("kValue", Integer.toString(kValue));
+		confFinal.set("numUsers", numUsers);
+		confFinal.set("numItems", numItems);
+		
+		Job jobFinal = new Job(confFinal, "ImprovedPBFS");
+		FileInputFormat.setInputPaths(jobFinal, new Path(tempFactorsInput));
+		FileOutputFormat.setOutputPath(jobFinal, new Path(finalFactorsOutput));
+		// Delete the output directory if it exists already
+		FileSystem.get(confPreprocRatings).delete(new Path(finalFactorsOutput), true);
+
+		jobFinal.setInputFormatClass(SequenceFileInputFormat.class);
+		jobFinal.setJarByClass(DSGDMain.class);
+		jobFinal.setNumReduceTasks(1); // Must use 1 reducer so that both U and M
+									   // get sent to same reducer
+		
+		jobFinal.setOutputKeyClass(Text.class);
+		jobFinal.setOutputValueClass(NullWritable.class);
+		
+		jobFinal.setMapOutputKeyClass(MatrixItem.class);
+		jobFinal.setMapOutputValueClass(NullWritable.class);
+		
+		jobFinal.setMapperClass(DSGDOutputFactorsMapper.class);
+		// jobFinal.setCombinerClass(FinalReducer.class);
+		jobFinal.setReducerClass(DSGDOutputFactorsReducer.class);
+
+		jobFinal.waitForCompletion(true);
+		// fsFinal.delete(tempInputDir, true);
 	}
 
 }

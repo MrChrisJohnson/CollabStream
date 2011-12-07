@@ -26,6 +26,7 @@ public class DSGDOutputFactorsReducer extends
 	double lambda;
 	int numUsers;
 	int numItems;
+	Text text = new Text();
 
 	/**
 	 * Output factor matrices on cleanup
@@ -33,21 +34,27 @@ public class DSGDOutputFactorsReducer extends
 	@Override
 	protected void cleanup(Context context) throws IOException,
 			InterruptedException {
-		String output = "U_Matrix\n";
-		for(double[] vector : UMatrix){
-			for(double val : vector){
-				output += val + " ";
+		text.set("U_Matrix");
+		context.write(text, nw);
+		for(double[] UVector : UMatrix){
+			String current = "";
+			for(double d : UVector){
+				current += d + " ";
 			}
-			output += "\n";
+			text.set(current);
+			context.write(text, nw);
 		}
-		output += "\nM_Matrx\n";
-		for(double[] vector : MMatrix){
-			for(double val : vector){
-				output += val + " ";
+		text.set("M_Matrix");
+		context.write(text, nw);
+		
+		for(double[] MVector : MMatrix){
+			String current = "";
+			for(double d : MVector){
+				current += d + " ";
 			}
-			output +="\n";
+			text.set(current);
+			context.write(text, nw);
 		}
-		context.write(new Text(output), nw);
 		super.cleanup(context);
 	}
 
@@ -55,8 +62,6 @@ public class DSGDOutputFactorsReducer extends
 	protected void setup(Context context) throws IOException,
 			InterruptedException {
 		kValue = Integer.parseInt(context.getConfiguration().get("kValue"));
-		tau = Double.parseDouble(context.getConfiguration().get("stepSize"));
-		lambda = Double.parseDouble(context.getConfiguration().get("lambda"));
 		numUsers = Integer.parseInt(context.getConfiguration().get("numUsers"));
 		numItems = Integer.parseInt(context.getConfiguration().get("numItems"));
 

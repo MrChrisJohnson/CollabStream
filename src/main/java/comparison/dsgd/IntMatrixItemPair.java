@@ -8,25 +8,27 @@ import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.WritableComparable;
 
 /**
- * Pair consisting of an IntWritable (the reducer number) and a MatrixItem
- * Used for 2 way sorting
+ * Pair consisting of an IntWritable (the reducer number) and a MatrixItem Used
+ * for 2 way sorting
+ * 
  * @author christopherjohnson
- *
+ * 
  */
-public class IntMatrixItemPair implements WritableComparable<IntMatrixItemPair>{
+public class IntMatrixItemPair implements WritableComparable<IntMatrixItemPair> {
 
-	private IntWritable reducerNum;
-	private MatrixItem matItem;
-	
-	public IntMatrixItemPair(){
-		
+	private IntWritable reducerNum = new IntWritable();
+	private MatrixItem matItem = new MatrixItem();
+
+	public IntMatrixItemPair() {
+
 	}
-	
-	public void set(IntWritable reducerNum, MatrixItem matItem){
-		this.reducerNum = reducerNum;
-		this.matItem = matItem;
+
+	public void set(IntWritable r, MatrixItem m) {
+		this.reducerNum = new IntWritable(r.get());
+		this.matItem.set(m.getRow().get(), m.getColumn().get(), m
+				.getValue().get(), m.getMatrixType().toString());
 	}
-	
+
 	public void readFields(DataInput arg0) throws IOException {
 		reducerNum.readFields(arg0);
 		matItem.readFields(arg0);
@@ -42,7 +44,7 @@ public class IntMatrixItemPair implements WritableComparable<IntMatrixItemPair>{
 		if (cmp != 0) {
 			return cmp;
 		}
-		return matItem.compareTo(o.matItem);
+		return matItem.compareTo(o.getMatItem());
 	}
 
 	public IntWritable getReducerNum() {

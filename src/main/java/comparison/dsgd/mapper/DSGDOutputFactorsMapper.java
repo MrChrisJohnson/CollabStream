@@ -12,8 +12,7 @@ public class DSGDOutputFactorsMapper extends Mapper<Text, MatrixItem, MatrixItem
 	
 	public void map(MatrixItem key, NullWritable value, Context context)
 		throws IOException, InterruptedException {
-		if(key.isFactorItem()){
-			context.write(key, value);
-		}
+		
+		context.write(key, value);
 	}
 }

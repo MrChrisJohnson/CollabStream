@@ -13,14 +13,9 @@ import comparison.dsgd.MatrixUtils.MatrixException;
 public class DSGDRmseReducer extends
 		Reducer<MatrixItem, NullWritable, DoubleWritable, DoubleWritable> {
 
-	// HashMap<LongPair, Double> UMap;
-	// HashMap<LongPair, Double> MMap;
 	double[][] UMatrix;
 	double[][] MMatrix;
-	MatrixItem matItem;
 	int kValue;
-	double tau;
-	double lambda;
 	double timeElapsed;
 	int numUsers;
 	int numItems;
@@ -43,8 +38,6 @@ public class DSGDRmseReducer extends
 		// UMap = new HashMap<LongPair, Double>();
 		// MMap = new HashMap<LongPair, Double>();
 		kValue = Integer.parseInt(context.getConfiguration().get("kValue"));
-		tau = Double.parseDouble(context.getConfiguration().get("stepSize"));
-		lambda = Double.parseDouble(context.getConfiguration().get("lambda"));
 		numUsers = Integer.parseInt(context.getConfiguration().get("numUsers"));
 		numItems = Integer.parseInt(context.getConfiguration().get("numItems"));
 		timeElapsed = Double.parseDouble(context.getConfiguration().get("timeElapsed"));
@@ -60,13 +53,13 @@ public class DSGDRmseReducer extends
 			Context context) throws IOException, InterruptedException {
 
 		if (key.isFactorItem()) {
-			if (matItem.getMatrixType().equals(MatrixItem.U_MATRIX)) {
-				UMatrix[matItem.getRow().get()][matItem.getColumn().get()] = matItem
+			if (key.getMatrixType().equals(MatrixItem.U_MATRIX)) {
+				UMatrix[key.getRow().get()][key.getColumn().get()] = key
 						.getValue().get();
 			} else {
 				// MMap.put(new LongPair(facItem.getRow().get(), facItem
 				// .getColumn().get()), facItem.getValue().get());
-				MMatrix[matItem.getRow().get()][matItem.getColumn().get()] = matItem
+				MMatrix[key.getRow().get()][key.getColumn().get()] = key
 						.getValue().get();
 			}
 		} else { // If we are now processing RatingsItems then we must have the
@@ -77,12 +70,7 @@ public class DSGDRmseReducer extends
 			double[] UVector = UMatrix[i];
 			double[] MVector = MMatrix[j];
 
-			double prediction = 0;
-			try {
-				prediction = MatrixUtils.dotProduct(UVector, MVector);
-			} catch (MatrixException e) {
-				e.printStackTrace();
-			}
+			double prediction = MatrixUtils.dotProduct(UVector, MVector);
 
 			sqError += ((prediction - key.getValue().get()) * (prediction - key
 					.getValue().get()));

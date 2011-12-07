@@ -10,20 +10,35 @@ import comparison.dsgd.MatrixItem;
 public class DSGDPreprocFactorReducer extends Reducer<MatrixItem, NullWritable, MatrixItem, NullWritable>{
 
 	NullWritable nw = NullWritable.get();
-	MatrixItem currentMatItem = new MatrixItem();
+	MatrixItem matItem = new MatrixItem();
 	
-	protected void reduce(MatrixItem key, Iterable<NullWritable> values, Context context) 
-		throws IOException, InterruptedException {
-		if(key.getMatrixType().equals(currentMatItem.getMatrixType())){
-			if(key.getRow().equals(currentMatItem.getRow())){
-				if(key.getColumn().equals(currentMatItem.getColumn())){
-					// Don't re-emit factor items (will be duplicates if > 1 mapper)
-					return;
-				}
+	@Override
+	protected void setup(Context context) throws IOException,
+			InterruptedException {
+		// Emit Factor Items (on the reduce side be sure to ignore duplicates
+		// that may occur due to multiple mappers)
+		int numUsers = Integer.parseInt(context.getConfiguration().get(
+				"numUsers"));
+		int numItems = Integer.parseInt(context.getConfiguration().get(
+				"numItems"));
+		int kValue = Integer.parseInt(context.getConfiguration().get("kValue"));
+		for (int i = 0; i < numUsers; ++i) {
+			for (int j = 0; j < kValue; ++j) {
+				matItem.set(i, j, Math.random(), MatrixItem.U_MATRIX.toString());
+				context.write(matItem, nw);
 			}
 		}
-		
-		context.write(key, nw);
+		for (int i = 0; i < numItems; ++i) {
+			for (int j = 0; j < kValue; ++j) {
+				matItem.set(i, j, Math.random(), MatrixItem.M_MATRIX.toString());
+				context.write(matItem, nw);
+			}
+		}
+		super.setup(context);
+	}
+
+	protected void reduce(MatrixItem key, Iterable<NullWritable> values, Context context) 
+		throws IOException, InterruptedException {
 		
 	}
 

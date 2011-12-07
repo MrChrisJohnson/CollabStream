@@ -66,15 +66,21 @@ public class MatrixItem implements WritableComparable<MatrixItem>, Cloneable {
 			}
 			return compare;
 		}
-		compare = this.getRow().compareTo(o.getRow());
-		if(compare != 0){
-			return compare;
+//		compare = this.getRow().compareTo(o.getRow());
+//		if(compare != 0){
+//			return compare;
+//		}
+//		compare = this.getColumn().compareTo(o.getColumn());
+//		if(compare != 0){
+//			return compare;
+//		}
+//		return this.getValue().compareTo(o.getValue());
+		double rand = Math.random();
+		if(rand > 0.5){
+			return 1;
+		} else{
+			return -1;
 		}
-		compare = this.getColumn().compareTo(o.getColumn());
-		if(compare != 0){
-			return compare;
-		}
-		return this.getValue().compareTo(o.getValue());
 	}
 
 	public IntWritable getRow() {

@@ -23,8 +23,10 @@ public class DSGDPreprocRatingsMapper extends
 
 		String line = ((Text) value).toString();
 		StringTokenizer itr = new StringTokenizer(line);
-		int user = Integer.parseInt(itr.nextToken());
-		int item = Integer.parseInt(itr.nextToken());
+		double dUser = Double.parseDouble(itr.nextToken()); //use double due to data's floating point format
+		int user = (int)dUser;
+		double dItem = Double.parseDouble(itr.nextToken());
+		int item = (int)dItem;
 		double rating = Double.parseDouble(itr.nextToken());
 		
 		if(rating != 0){ // don't do anything with un-rated items
