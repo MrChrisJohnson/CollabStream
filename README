@@ -1,29 +1,13 @@
-Authors: Christopher Johnson, Alex Tang, Muqeet Ali
+Authors: Chris Johnson, Alex Tang, Muqeet Ali
 
 CollabStream implements parallelized online matrix factorization using stochastic gradient descent in the case of online streaming data.  CollabStream utilizes the Storm parallelization framework developed by Natahn Marz and available at https://github.com/nathanmarz/storm.  For more information on the algorithm used by CollabStream please see the full report found at https://github.com/MrChrisJohnson/CollabStream.   
 
-We have used github https://github.com/ for our version control. 
-All our code can be found at the online repository https://github.com/MrChrisJohnson/CollabStream. 
-Simple instructions to set up a github account can be found at http://help.github.com/win-set-up-git/
-One needs to fork a repository, and then clone it in order to have it on the local machine. Once the repository is forked, then we can clone it by:
-$git clone git@github.com/username/CollabStream
-
-In the src folder you can find all the code we have written. collabstream refers to the code written in TwitterStorm for the streaming DSGD. 
-Within collabstream, lc is a simple test program, and collabstream is the Streaming DSGD code. Instructions to run the Storm-related code can be found at:
-https://github.com/MrChrisJohnson/CollabStream/blob/master/commands.txt
-
-comparison code in the src folder refers to all the Hadoop-code written to compare the performance with batch DSGD.  To run the this code follow the instructions:
+To run:
 1. Go to the directory where you cloned the project.
-2. Do mvn compile
-3. Do mvn package
+2. mvn compile
+3. mvn package
 4. Take the jar with dependencies from the target folder (e.g., name.jar)
 5. run on Hadoop cluster using:
    hadoop jar name.jar comparison.dsgd.DSGDMain inputPath outputPath numReducers
       where inputPath refers to the path of the train and test data, outputPath refers to where the RMSE and the factor matrices are outputted.  
 	   
-	   We have used maven to build our code:
-	   http://maven.apache.org/download.html
-
-
-
-
